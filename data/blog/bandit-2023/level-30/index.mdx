@@ -1,0 +1,122 @@
+---
+title: 'Bandit 30 Writeup'
+date: '2023-10-20'
+lastmod: '2023-10-20'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 30 is a challenge involving git"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2,active: true },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+### Git tag 
+
+A git tag is a reference to a specific point in a Git repository's history. It is used to mark important points, such as releases or significant changes. Tags are often used in a similar way to branches, but unlike branches, they are immutable; once created, they do not change. There are two types of tags in Git: lightweight and annotated.
+  
+# bandit 30
+## Task 
+There is a git repository at ssh://bandit29-git@localhost/home/bandit29-git/repo via the port 2220. The password for the user bandit29-git is the same as for the user bandit29.
+
+Clone the repository and find the password for the next level.
+
+## Solution
+When cloning the repository, we can see that the log shows a single commit:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git log
+commit d39631d73f786269b895ae9a7b14760cbf40a99f (HEAD -> master, origin/master, origin/HEAD)
+Author: Ben Dover <noone@overthewire.org>
+Date:   Thu Oct 5 06:19:45 2023 +0000
+
+    initial commit of README.md
+```
+
+This shows the initial commit of the repository, authored by Ben Dover, with the message "initial commit of README.md".
+
+Additionally, we use autocompletion to check if there are any other branches and find that there is a branch called `secret`. We then list the branches:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+HEAD            master          origin/HEAD     origin/master   secret
+```
+
+This command lists all branches, showing that there is indeed a `secret` branch. We verify the current branch and see that we are on `master`:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+* master
+```
+
+We then try to switch to the `secret` branch:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch secret
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+* master
+  secret
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git checkout secret
+warning: refname 'secret' is ambiguous.
+Switched to branch 'secret'
+```
+
+Here, we encounter a warning that 'secret' is ambiguous, but the branch switch is successful. We are now on the `secret` branch. Running `git log` again shows the same commit as in the master branch:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git log
+commit d39631d73f786269b895ae9a7b14760cbf40a99f (HEAD -> secret, origin/master, origin/HEAD, master)
+Author: Ben Dover <noone@overthewire.org>
+Date:   Thu Oct 5 06:19:45 2023 +0000
+
+    initial commit of README.md
+```
+
+This confirms that there are no new commits in the `secret` branch compared to the `master` branch.
+
+Next, we list the tags to check for any additional information:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git tag
+secret
+```
+
+We find a tag also named `secret`. We use `git show` to see the details of this tag:
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git show secret
+warning: refname 'secret' is ambiguous.
+OoffzGDlzhAlerFJ2cAiz1D41JW1Mhmt
+```
+
+The `git show` command reveals that the `secret` tag contains a string: `OoffzGDlzhAlerFJ2cAiz1D41JW1Mhmt`. This is the information we were looking for. Bingo!

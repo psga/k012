@@ -1,0 +1,93 @@
+---
+title: 'Bandit 19 Writeup'
+date: '2023-10-09'
+lastmod: '2023-10-09'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 19 is a challenge involving ssh command."
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2,active: true},
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+### Understanding `setuid`
+
+The `setuid` (Set User ID) permission is a special type of file permission in Unix and Linux systems that allows users to run an executable file with the permissions of the file's owner rather than the permissions of the user running the file. Here’s a detailed explanation:
+
+#### Basics of File Permissions
+
+In Unix and Linux, every file and directory has associated permissions that control who can read, write, or execute them. These permissions are represented for three categories:
+- **Owner**: The user who owns the file.
+- **Group**: The group that owns the file.
+- **Others**: All other users.
+
+Permissions are typically displayed as a string of ten characters (e.g., `-rwxr-xr-x`):
+- The first character indicates the type of file (`-` for regular file, `d` for directory, `l` for symbolic link, etc.).
+- The next three characters are the owner's permissions (read, write, execute).
+- The next three characters are the group's permissions.
+- The final three characters are the others' permissions.
+
+#### Special Permissions: `setuid`, `setgid`, and `sticky bit`
+
+In addition to the basic permissions, there are special permissions that provide additional capabilities:
+- **setuid (Set User ID on execution)**: When set on an executable file, this permission allows users to execute the file with the privileges of the file’s owner.
+- **setgid (Set Group ID on execution)**: When set on an executable file, this permission allows users to execute the file with the privileges of the file’s group.
+- **Sticky bit**: Typically used on directories, it allows files within the directory to be deleted or renamed only by their owner.
+
+#### The `setuid` Permission
+
+When `setuid` is set on an executable file, it changes the execution user context. Here’s how it works:
+- **Without `setuid`**: When a user executes a file, it runs with the user's permissions.
+- **With `setuid`**: When a user executes a file, it runs with the permissions of the file's owner, which is often the `root` user.
+
+This mechanism is used for tasks that require elevated privileges. A common example is the `passwd` command, which allows users to change their passwords. The `passwd` command needs to update system files that are writable only by `root`, so it is set with the `setuid` permission.
+
+# bandit 19
+## Task 
+To gain access to the next level, you should use the setuid binary in the homedirectory. Execute it without arguments to find out how to use it. The password for this level can be found in the usual place (/etc/bandit_pass), after you have used the setuid binary.
+
+## Solution
+When we access to the machine we can see a setuid called `bandit20-do` in the home directory.
+Run this setuid
+```
+bandit19@bandit:~$ ./bandit20-do
+Run a command as another user.
+ Example: ./bandit20-do id
+```
+Then knowing that we can run this for get the password
+```
+bandit19@bandit:~$ ./bandit20-do cat /etc/bandit_pass/bandit20
+VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+bandit19@bandit:~$
+```

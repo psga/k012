@@ -1,0 +1,126 @@
+---
+title: 'Bandit 14 Writeup'
+date: '2023-10-04'
+lastmod: '2023-10-04'
+tags: ['CTF', 'OTW']
+summary: "Solution for bandit 14 with their concepts"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2,active: true,},
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+
+Here are some topics related to this level with their respective explanations: 
+
+### IP addresses
+IP addresses are numerical labels assigned to devices connected to a computer network that uses the Internet Protocol to communicate. They serve two main functions: network interface identification and location addressing.
+
+IPv4 uses 32-bit numbers, while IPv6 uses 128-bit numbers. 
+IP addresses are written and displayed in human-readable notations, such as 192.0.2.1 in IPv4, and 2001:db8:0:1234:0:567:8:1 in IPv6. The routing prefix size of the address is designated in CIDR notation, as 192.0.2.1/24.
+
+### What is localhost?
+
+Localhost is a special hostname that refers to the current computer that is being used to access it. This hostname is used to access network services running on the host through the loopback network interface. Unlike other network interfaces, localhost bypasses any local network interface hardware, allowing network services to run on the host without requiring a physical connection.
+
+**The loopback mechanism is a crucial aspect of localhost. It allows network services to run on a host without the need for a physical network interface. This means that multiple server applications can be configured on the host, all listening on the same port number. This mechanism is particularly useful for development, testing and debugging purposes as it allows developers to test and debug their applications without having to set up a physical network infrastructure.
+
+
+
+### Port
+is a number assigned to uniquely identify a connection endpoint and direct data to a specific service. Any server machine makes its services available to the Internet through numbered ports, one for each service that is available on the server. For example, if a server machine runs a web server and an FTP server, the web server would normally be available on port 80 and the FTP server would be available on port 21. Clients connect to a service on a specific IP address and on a specific port.
+
+
+
+### Telnet, SSH and Ncat
+
+**Telnet: Telnet is a network protocol that allows users to connect to and control remote devices over a network. It is used to administer remote systems, such as servers and routers, as well as to perform connectivity testing and network diagnostics. However, Telnet transmits data in unencrypted text, which makes it vulnerable to security attacks, such as data interception.
+
+
+**SSH** : SSH is a remote administration protocol that allows users to control and modify remote servers over the Internet through an authentication mechanism. It works by providing a method for authenticating remote users, transferring input from the client to the host and returning the output to the client. It works by using cryptographic techniques to ensure that all communications to and from the remote server are encrypted. It works by establishing a secure connection between the client and server through a process of session encryption negotiation and user authentication, using both symmetric and asymmetric encryption along with hashing to ensure the security of the communication.
+
+**Ncat**: nc is a versatile and powerful networking tool that allows reading and writing data over networks from the command line. Developed as an enhancement to the veteran Netcat for the Nmap project, Ncat offers a wide range of functionality, including IPv4 and IPv6 support, TCP, UDP and SCTP port forwarding, SSL, and proxy connections via SOCKS4 or HTTP proxies. It can be used for port scanning, security auditing of systems and web servers, as well as for monitoring and as a simple TCP proxy. In short, Ncat is an indispensable tool for a variety of uses in the field of security and network administration.
+
+
+
+
+----
+
+# level Solution
+
+the password for the next level can be obtained by sending the password file of the current level to **port 30000** on localhost
+
+To solve this problem was just to make a communication with the host on port 30000 which asked me for the password (Password I already had).
+
+### Telnet solution
+
+I did this with the *telnet* (Manual) sypnosis.
+
+
+
+
+```bash
+telnet [host [port]]
+```
+
+```console
+bandit14@bandit:~$ telnet localhost 30000
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+fGrHPx402xGC7U7rXKDaxiWFTOiF0ENq
+Correct!
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
+
+Connection closed by foreign host.
+```
+
+### nc solution
+
+Other solution is with nc. We can make a connection to communicate with the localhost in that port. Likewise telnet
+
+```bash
+nc [destination] [port]
+```
+
+
+```console
+bandit14@bandit:~$ nc localhost 30000
+fGrHPx402xGC7U7rXKDaxiWFTOiF0ENq
+Correct!
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
+
+
+```

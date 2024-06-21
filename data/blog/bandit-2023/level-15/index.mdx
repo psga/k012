@@ -1,0 +1,92 @@
+---
+title: 'Bandit 15 Writeup'
+date: '2023-10-05'
+lastmod: '2023-10-05'
+tags: ['CTF', 'OTW']
+summary: "Solution for bandit 15 and concepts like TLS "
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+
+
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2,},
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2,active: true,},
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider 
+
+
+Bandit level 15 asks us to send the level 15 password to localhost with port 30001 to obtain the next level password with SSL encryption. This must be done with a communication with the TLS protocol and OpenSSL can help us in this case. Let's see what TLS is
+
+## Transport Layer Security (TLS)
+
+It is a cryptographic protocol designed to ensure security in communications over computer networks used widely in applications such as email, instant messaging and voice over IP with HTTPS being its best-known use. It works by providing confidentiality, integrity and authenticity through cryptographic techniques between communicating applications
+
+* Secure Connection Negotiation: The client and server agree to establish a secure connection through a negotiation process, in which the client requests a secure connection and presents a list of supported cipher suites.
+
+* Security parameter selection: The server chooses a cipher and hash suite from the list presented by the client and notifies the client of its decision. The server can also provide a digital certificate for identification, which is validated by the client.
+
+* Session key generation: To establish the secure connection, the client and server generate unique session keys. This can be done by encrypting a random number with the server's public key and then generating a session key based on that number, or by using a Diffie-Hellman key exchange to generate a secure session key.
+
+* Establishment of the secure connection: Once the negotiation and key generation is complete, the secure connection is established and the data is encrypted and decrypted using the session key until the connection is closed. If any of the above steps fail, the secure connection is not established and the TLS protocol terminates.
+
+In summary, TLS secures communications over computer networks by negotiating a secure connection, selecting security parameters, validating identity using digital certificates, and generating unique session keys to encrypt and decrypt transmitted data.
+
+## OpenSSL
+OpenSSL is an open source cryptography library that implements the TLS protocol and offers a wide range of tools to perform SSL-related tasks. It allows users to generate CSR (Certificate Signing Request) private keys and SSL certificates, as well as install and manage certificates on web servers and email clients. With OpenSSL, you can perform actions such as generating certificate signing requests, creating private keys, installing SSL files, converting certificates to different formats, verifying certificate information, and troubleshooting issues. It is especially useful in environments where there is no web control panel available or you are looking to streamline the SSL management process.
+
+---
+# level 16
+## info 
+The password for the next level can be retrieved by submitting the password of the current level to port 30001 on localhost using SSL encryption.
+
+## Solution 
+So. We see on the OpenSSL manpage that
+```
+s_client
+This implements a generic SSL/TLS client which can
+establish a transparent connection to a remote server
+speaking SSL/TLS. It's intended for testing purposes
+only and provides only rudimentary interface
+functionality but internally uses mostly all
+functionality of the OpenSSL ssl library
+```
+Then, we connect using and send the password
+
+```console
+bandit15@bandit:~$ openssl s_client -connect localhost:30001
+...
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
+Correct!
+JQttfApK4SeyHwDlI9SXGR50qclOAil1
+```
+

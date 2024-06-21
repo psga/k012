@@ -1,0 +1,65 @@
+---
+title: 'Bandit 17 Writeup'
+date: '2023-10-07'
+lastmod: '2023-10-07'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 17 is a challenge involving diff command."
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2, active: true},
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+
+only this, from the manual
+```
+diff (1)             - compare files line by line
+```
+
+# bandit 17
+## Task 
+There are 2 files in the homedirectory: passwords.old and passwords.new. The password for the next level is in passwords.new and is the only line that has been changed between passwords.old and passwords.new
+
+NOTE: if you have solved this level and see ‘Byebye!’ when trying to log into bandit18, this is related to the next level, bandit19
+
+
+## Solution
+bandit17@bandit:~$ diff passwords.new passwords.old 
+42c42
+< hga5tuuCLF6fFzUpnagiMN8ssu9LFrdg
+---
+> p6ggwdNHncnmCNxuAt0KtKVq185ZU7AW
+
+That is the password for the next level but as we see it comes out byebye ending the connection. This is because the .bashrc has been modified to log me out

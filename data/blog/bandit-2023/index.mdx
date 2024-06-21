@@ -1,0 +1,876 @@
+---
+title: 'Bandit from OpenTheWire Writeup'
+date: '2023-09-15'
+lastmod: '2023-09-15'
+tags: ['unity', 'game-hacking', 'reverse-engineering']
+summary: "I created a fully functional, hackable replica of Project Sekai's gacha system for SekaiCTF 2023. This was my design process."
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+---
+
+# Resoluciones a Bandit de OverTheWire
+Bandit es un wargame para principiantes el cual hemos empezado a hacer (@Maysu y @Pablo) para practicar nuestras habilidades en cyberseguridad y practicar para otros CTF. Aqui, nosotros montaremos nuestras soluciones, con nuestra explicacion a algunos temas relacionados a cada reto.
+
+---
+---
+---
+
+# Internet, direcciones ip y resolucion de level 14
+
+Aqui algunos temas relacionados a este nivel con su respectiva explicacion son : 
+
+### IP addresses
+Las direcciones IP son etiquetas numéricas que se asignan a los dispositivos conectados a una red informática que utiliza el Protocolo de Internet para comunicarse. Cumplen dos funciones principales: identificación de la interfaz de red y direccionamiento de la ubicación.
+
+IPv4 utiliza números de 32 bits, mientras que IPv6 utiliza números de 128 bits.
+
+Las direcciones IP se escriben y muestran en notaciones legibles para el ser humano, como 192.0.2.1 en IPv4, y 2001:db8:0:1234:0:567:8:1 en IPv6. El tamaño del prefijo de enrutamiento de la dirección se designa en notación CIDR, como 192.0.2.1/24.
+
+
+### ¿Qué es localhost?
+
+Localhost es un nombre de host especial que hace referencia al ordenador actual que se está utilizando para acceder a él. Este nombre de host se utiliza para acceder a los servicios de red que se ejecutan en el host a través de la interfaz de red loopback. A diferencia de otras interfaces de red, localhost omite cualquier hardware de interfaz de red local, permitiendo que los servicios de red se ejecuten en el host sin requerir una conexión física.
+
+**El mecanismo de loopback** El mecanismo de loopback es un aspecto crucial de localhost. Permite ejecutar servicios de red en un host sin necesidad de una interfaz de red física. Esto significa que se pueden configurar múltiples aplicaciones de servidor en el host, todas escuchando en el mismo número de puerto. Este mecanismo es particularmente útil para propósitos de desarrollo, pruebas y depuración ya que permite a los desarrolladores probar y depurar sus aplicaciones sin tener que configurar una infraestructura de red física.
+
+### Puerto
+es un número asignado para identificar de forma única un punto final de conexión y dirigir datos a un servicio específico.Cualquier máquina servidor pone sus servicios a disposición de Internet mediante puertos numerados , uno para cada servicio que está disponible en el servidor. Por ejemplo, si una máquina servidor ejecuta un servidor web y un servidor FTP, el servidor web normalmente estaría disponible en el puerto 80 y el servidor FTP estaría disponible en el puerto 21. Los clientes se conectan a un servicio en una dirección IP específica y en un puerto específico.
+
+
+
+### Telnet, SSH y Ncat
+
+**Telnet**: Telnet es un protocolo de red que permite a los usuarios conectarse y controlar dispositivos remotos a través de una red. Se utiliza para administrar sistemas remotos, como servidores y enrutadores, así como para realizar pruebas de conectividad y diagnósticos de red. Sin embargo, Telnet transmite datos en texto sin cifrar, lo que lo hace vulnerable a ataques de seguridad, como la interceptación de datos.
+
+**SSH** : SSH  es un protocolo de administración remota que permite a los usuarios controlar y modificar servidores remotos a través de Internet mediante un mecanismo de autenticación. Funciona proporcionando un método para autenticar usuarios remotos, transferir entradas desde el cliente al host y devolver la salida al cliente. Utilizando técnicas criptográficas para garantizar que todas las comunicaciones hacia y desde el servidor remoto se realicen de manera encriptada. Funciona estableciendo una conexión segura entre el cliente y el servidor a través de un proceso de negociación de cifrado de sesión y autenticación del usuario, utilizando tanto cifrado simétrico como asimétrico junto con hashing para garantizar la seguridad de la comunicación.
+
+**Ncat**: nc es una herramienta de red versátil y poderosa que permite leer y escribir datos a través de redes desde la línea de comandos. Desarrollado como una mejora del veterano Netcat para el proyecto Nmap, Ncat ofrece una amplia gama de funcionalidades, incluyendo soporte para IPv4 e IPv6, redirección de puertos TCP, UDP y SCTP, SSL, y conexiones de proxy a través de SOCKS4 o proxies HTTP. Puede utilizarse para escanear puertos, auditar la seguridad de sistemas y servidores web, así como para monitoreo y como proxy TCP simple. En resumen, Ncat es una herramienta indispensable para diversos usos en el ámbito de la seguridad y la administración de redes.
+
+
+
+----
+
+
+##  bandit level 14
+
+la contraseña para el siguiente nivel puede ser conseguida enviando el archivo contraseña del nivel actual al **puerto 30000** en localhost
+
+Para resolver este problema solo fue hacer una comunicacion con el host de puerto 30000 el cual me pedia la contraseña (Contraseña que ya tenia)
+
+Esto lo hice con la sypnosis de *telnet* (Manual)
+
+
+
+```bash
+telnet [host [port]]
+```
+
+```console
+bandit14@bandit:~$ telnet localhost 30000
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+fGrHPx402xGC7U7rXKDaxiWFTOiF0ENq
+Correct!
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
+
+Connection closed by foreign host.
+```
+
+Otra solucion usando nc haciendo una comunicacion con el localhost de igual manera que con telnet
+
+
+```bash
+nc [destination] [port]
+```
+
+
+```console
+bandit14@bandit:~$ nc localhost 30000
+fGrHPx402xGC7U7rXKDaxiWFTOiF0ENq
+Correct!
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
+
+
+```
+-----
+-----
+-----
+
+# Internet, direcciones ip y resolucion de bandit level 15
+
+
+El nivel 15 de bandit nos pide enviar la contrasena del nivel 15 al localhost con el puerto 30001 para conseguir la contrasena del siguiente nivel con encriptacion SSL. Esto de debe hacer con una comunicacion con el protocolo TLS y OpenSSL nos puede ayudar en este caso. Veamos que es TLS
+
+## Transport Layer Security (TLS)
+
+Es un protocolo criptográfico diseñado para garantizar la seguridad en las comunicaciones a través de redes informáticas utilizado ampliamente en aplicaciones como correo electrónico, mensajería instantánea y voz sobre IP con HTTPS siendo su uso más conocido. Funciona proporcionando confidencialidad, integridad y autenticidad mediante técnicas de criptografía entre aplicaciones que se comunican
+
+* Negociación de conexión segura: El cliente y el servidor acuerdan establecer una conexión segura mediante un proceso de negociación, en el cual el cliente solicita una conexión segura y presenta una lista de conjuntos de cifrado admitidos.
+
+* Selección de parámetros de seguridad: El servidor elige un conjunto de cifrado y hash de la lista presentada por el cliente y notifica al cliente su decisión. El servidor también puede proporcionar un certificado digital para su identificación, el cual es validado por el cliente.
+
+* Generación de claves de sesión: Para establecer la conexión segura, el cliente y el servidor generan claves de sesión únicas. Esto puede realizarse cifrando un número aleatorio con la clave pública del servidor y luego generando una clave de sesión basada en ese número,o utilizando un intercambio de claves Diffie-Hellman para generar una clave de sesión segura.
+
+* Establecimiento de la conexión segura: Una vez completada la negociación y generación de claves,se establece la conexión segura y los datos se cifran y descifran utilizando la clave de sesión hasta que se cierre la conexión. Si alguno de los pasos anteriores falla, la conexión segura no se establece y el protocolo TLS termina.
+
+En resumen, TLS asegura las comunicaciones en redes informáticas mediante la negociación de una conexión segura, la selección de parámetros de seguridad,la validación de identidad mediante certificados digitales, y la generación de claves de sesión únicas para cifrar y descifrar los datos transmitidos.
+
+## OpenSSL
+OpenSSL es una biblioteca de criptografía de código abierto que implementa el protocolo TLS y ofrece una amplia gama de herramientas para realizar tareas relacionadas con SSL. Permite a los usuarios generar CSR (Certificate Signing Request) claves privadas y certificados SSL, así como instalar y administrar certificados en servidores web y clientes de correo electrónico. Con OpenSSL, puedes realizar acciones como generar solicitudes de firma de certificado,crear claves privadas, instalar archivos SSL, convertir certificados a diferentes formatos, verificar información de certificados y solucionar problemas. Es especialmente útil en entornos donde no hay un panel de control web disponible o se busca agilizar el proceso de gestión de SSL.
+
+Entonces. Vemos en la manpage de OpenSSL que 
+```
+s_client
+This implements a generic SSL/TLS client which can
+establish a transparent connection to a remote server 
+speaking SSL/TLS. It's intended for testing purposes 
+only and provides only rudimentary interface 
+functionality but internally uses mostly all 
+functionality of the OpenSSL ssl library
+```           
+Luego, nos conectamos usando 
+
+```console
+bandit15@bandit:~$ openssl s_client -connect localhost:30001
+
+JQttfApK4SeyHwDlI9SXGR50qclOAil1
+```
+
+
+
+
+
+----
+----
+----
+
+
+# bandit level 16
+ingreso a bandit 16
+# Port scanner on Wikipedia
+escaneo de puertos nmap
+```
+-p port ranges 
+```
+
+
+```
+nmap localhost -p 31000-32000
+Starting Nmap 7.80 ( https://nmap.org ) at 2024-06-02 11:53 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00010s latency).
+Not shown: 996 closed ports
+PORT      STATE SERVICE
+31046/tcp open  unknown
+31518/tcp open  unknown
+31691/tcp open  unknown
+31790/tcp open  unknown
+31960/tcp open  unknown
+```
+```
+-sV: Probe open ports to determine service/version info
+```
+
+```
+nmap localhost -p 31000-32000 -sV
+Starting Nmap 7.80 ( https://nmap.org ) at 2024-06-02 11:55 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00010s latency).
+Not shown: 996 closed ports
+PORT      STATE SERVICE     VERSION
+31046/tcp open  echo
+31518/tcp open  ssl/echo
+31691/tcp open  echo
+31790/tcp open  ssl/unknown
+31960/tcp open  echo
+```
+```
+-T<0-5>: Set timing template (higher is faster)
+```
+entramos a 31790 
+```
+bandit16@bandit:~$ openssl s_client -connect localhost -port 31790
+```
+e ingresamos la contrasena
+```
+---
+read R BLOCK
+JQttfApK4SeyHwDlI9SXGR50qclOAil1
+Correct!
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAvmOkuifmMg6HL2YPIOjon6iWfbp7c3jx34YkYWqUH57SUdyJ
+imZzeyGC0gtZPGujUSxiJSWI/oTqexh+cAMTSMlOJf7+BrJObArnxd9Y7YT2bRPQ
+Ja6Lzb558YW3FZl87ORiO+rW4LCDCNd2lUvLE/GL2GWyuKN0K5iCd5TbtJzEkQTu
+DSt2mcNn4rhAL+JFr56o4T6z8WWAW18BR6yGrMq7Q/kALHYW3OekePQAzL0VUYbW
+JGTi65CxbCnzc/w4+mqQyvmzpWtMAzJTzAzQxNbkR2MBGySxDLrjg0LWN6sK7wNX
+x0YVztz/zbIkPjfkU1jHS+9EbVNj+D1XFOJuaQIDAQABAoIBABagpxpM1aoLWfvD
+KHcj10nqcoBc4oE11aFYQwik7xfW+24pRNuDE6SFthOar69jp5RlLwD1NhPx3iBl
+J9nOM8OJ0VToum43UOS8YxF8WwhXriYGnc1sskbwpXOUDc9uX4+UESzH22P29ovd
+d8WErY0gPxun8pbJLmxkAtWNhpMvfe0050vk9TL5wqbu9AlbssgTcCXkMQnPw9nC
+YNN6DDP2lbcBrvgT9YCNL6C+ZKufD52yOQ9qOkwFTEQpjtF4uNtJom+asvlpmS8A
+vLY9r60wYSvmZhNqBUrj7lyCtXMIu1kkd4w7F77k+DjHoAXyxcUp1DGL51sOmama
++TOWWgECgYEA8JtPxP0GRJ+IQkX262jM3dEIkza8ky5moIwUqYdsx0NxHgRRhORT
+8c8hAuRBb2G82so8vUHk/fur85OEfc9TncnCY2crpoqsghifKLxrLgtT+qDpfZnx
+SatLdt8GfQ85yA7hnWWJ2MxF3NaeSDm75Lsm+tBbAiyc9P2jGRNtMSkCgYEAypHd
+HCctNi/FwjulhttFx/rHYKhLidZDFYeiE/v45bN4yFm8x7R/b0iE7KaszX+Exdvt
+SghaTdcG0Knyw1bpJVyusavPzpaJMjdJ6tcFhVAbAjm7enCIvGCSx+X3l5SiWg0A
+R57hJglezIiVjv3aGwHwvlZvtszK6zV6oXFAu0ECgYAbjo46T4hyP5tJi93V5HDi
+Ttiek7xRVxUl+iU7rWkGAXFpMLFteQEsRr7PJ/lemmEY5eTDAFMLy9FL2m9oQWCg
+R8VdwSk8r9FGLS+9aKcV5PI/WEKlwgXinB3OhYimtiG2Cg5JCqIZFHxD6MjEGOiu
+L8ktHMPvodBwNsSBULpG0QKBgBAplTfC1HOnWiMGOU3KPwYWt0O6CdTkmJOmL8Ni
+blh9elyZ9FsGxsgtRBXRsqXuz7wtsQAgLHxbdLq/ZJQ7YfzOKU4ZxEnabvXnvWkU
+YOdjHdSOoKvDQNWu6ucyLRAWFuISeXw9a/9p7ftpxm0TSgyvmfLF2MIAEwyzRqaM
+77pBAoGAMmjmIJdjp+Ez8duyn3ieo36yrttF5NSsJLAbxFpdlc1gvtGCWW+9Cq0b
+dxviW8+TFVEBl1O4f7HVm6EpTscdDxU+bCXWkfjuRb7Dy9GOtt9JPsX8MBTakzh3
+vBgsyi/sN3RqRBcGU40fOoZyfAMT8s1m/uYv52O6IgeuZ/ujbjY=
+-----END RSA PRIVATE KEY-----
+```
+
+Creamos directorios para guardar la llave privada
+```
+bandit16@bandit:~$ mktemp -d
+/tmp/tmp.S7PnvbwU5u
+```
+entramos al directorio y guardamos la llave privada en un archivo. 
+
+Sabemos que la clave en un archivo tiene que tener permisos muy estrictos, cambiamos los permisos a 600 
+```
+bandit16@bandit:/tmp/tmp.S7PnvbwU5u$ chmod 400 contrasenini 
+
+```
+
+
+entramos 
+
+```
+bandit16@bandit:/tmp/tmp.S7PnvbwU5u$ ssh bandit17@bandit.labs.overthewire.org -p 2220 -i contrasenini 
+
+```
+ingresamos
+
+----
+----
+----
+# bandit 17
+```
+diff (1)             - compare files line by line
+
+```
+bandit17@bandit:~$ diff passwords.new passwords.old 
+42c42
+< hga5tuuCLF6fFzUpnagiMN8ssu9LFrdg
+---
+> p6ggwdNHncnmCNxuAt0KtKVq185ZU7AW
+
+Esa es la contrasena para el siguiente nivel pero como vemos sale byebye terminando la conexion. Esto es porque el .bashrc ha sido modificado para desloguearme
+---
+---
+---
+# bandit 18
+
+la contrasena del siguiente nivel esta en un archivo readme en el escritorio, pero como no podemos acceder a bandit18 tendremos que ejecutar el comando mientras entramos
+
+viendo el manual de ssh 
+```
+ ssh  destination [command [argument ...]]
+```
+
+entonces usamos 
+```
+ssh bandit18@bandit.labs.overthewire.org -p 2220 cat readme
+```
+
+```
+bandit18@bandit.labs.overthewire.org's password: 
+awhqfNnAbc1naukrpqDYcF95h7HoMTrC
+
+```
+
+---
+---
+---
+# bandit 19
+
+setuid on Wikipedia
+
+
+```
+bandit19@bandit:~$ ./bandit20-do
+Run a command as another user.
+  Example: ./bandit20-do id
+bandit19@bandit:~$ ./bandit20-do cat /etc/bandit_pass/bandit20
+VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+bandit19@bandit:~$ 
+
+```
+---
+---
+---
+# bandit 20
+
+ssh, nc, cat, bash, screen, tmux, Unix ‘job control’ (bg, fg, jobs, &, CTRL-Z, …)
+
+
+Uso tmux para abrir 2 terminales
+
+hago conexion para comunicarme con la otra
+```
+bandit20@bandit:~$ nc -l 6666
+```
+ejecuto el setuid en la otra consola
+```
+bandit20@bandit:~$ ./suconnect 6666
+```
+
+en la consola de netcat mando la contrasena actual y veo que el el setuid manda:
+```
+Read: VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+Password matches, sending next password
+```
+luego en el puerto 6666 recibo el mensaje
+```
+NvEJF7oVjkddltPSrdKEFOllh9V1IBcq
+```
+---
+---
+---
+# bandit 21
+
+
+
+Look in /etc/cron.d/ 
+
+
+```
+bandit21@bandit:/etc/cron.d$ ls -l
+total 36
+-rw-r--r-- 1 root root  62 Oct  5  2023 cronjob_bandit15_root
+-rw-r--r-- 1 root root  62 Oct  5  2023 cronjob_bandit17_root
+-rw-r--r-- 1 root root 120 Oct  5  2023 cronjob_bandit22
+-rw-r--r-- 1 root root 122 Oct  5  2023 cronjob_bandit23
+-rw-r--r-- 1 root root 120 Oct  5  2023 cronjob_bandit24
+-rw-r--r-- 1 root root  62 Oct  5  2023 cronjob_bandit25_root
+-rw-r--r-- 1 root root 201 Jan  8  2022 e2scrub_all
+-rwx------ 1 root root  52 Oct  5  2023 otw-tmp-dir
+-rw-r--r-- 1 root root 396 Feb  2  2021 sysstat
+```
+
+
+```
+bandit21@bandit:/etc/cron.d$ cat cronjob_bandit22
+@reboot bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+* * * * * bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+```
+
+```
+bandit21@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit22.sh 
+#!/bin/bash
+chmod 644 /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+cat /etc/bandit_pass/bandit22 > /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+```
+
+
+```
+bandit21@bandit:/etc/cron.d$ cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+WdDozAdTM2z9DiFEQ2mGlwngMfj4EZff
+```
+
+---
+---
+---
+# bandit 22
+
+cron, crontab, crontab(5) (use “man 5 crontab” to access this)
+
+```
+bandit22@bandit:/etc/cron.d$ cat cronjob_bandit23
+@reboot bandit23 /usr/bin/cronjob_bandit23.sh  &> /dev/null
+* * * * * bandit23 /usr/bin/cronjob_bandit23.sh  &> /dev/null
+```
+
+
+```
+bandit22@bandit:/etc/cron.d$ cat cronjob_bandit22
+@reboot bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+* * * * * bandit22 /usr/bin/cronjob_bandit22.sh &> /dev/null
+```
+
+```
+bandit22@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit23.sh
+#!/bin/bash
+
+myname=$(whoami)
+mytarget=$(echo I am user $myname | md5sum | cut -d ' ' -f 1)
+
+echo "Copying passwordfile /etc/bandit_pass/$myname to /tmp/$mytarget"
+
+cat /etc/bandit_pass/$myname > /tmp/$mytarget
+
+```
+
+```
+bandit22@bandit:/etc/cron.d$ echo I am user $myname | md5sum | cut -d ' ' -f 1
+7db97df393f40ad1691b6e1fb03d53eb
+```
+
+```
+echo I am user bandit23 | md5sum | cut -d ' ' -f 1
+8ca319486bfbbc3663ea0fbe81326349
+```
+
+
+```
+cat /tmp/8ca319486bfbbc3663ea0fbe81326349
+QYw0Y2aiA672PsMmh9puTQuhoz8SyR2G
+```
+
+---
+---
+---
+# bandit 23
+
+cron, crontab, crontab(5) (use “man 5 crontab” to access this)
+
+```
+bandit23@bandit:~$ cat /etc/cron.d/cronjob_bandit24
+@reboot bandit24 /usr/bin/cronjob_bandit24.sh &> /dev/null
+* * * * * bandit24 /usr/bin/cronjob_bandit24.sh &> /dev/null
+```
+
+
+```
+cat /usr/bin/cronjob_bandit24.sh
+#!/bin/bash
+
+myname=$(whoami)
+
+cd /var/spool/$myname/foo
+echo "Executing and deleting all scripts in /var/spool/$myname/foo:"
+for i in * .*;
+do
+    if [ "$i" != "." -a "$i" != ".." ];
+    then
+        echo "Handling $i"
+        owner="$(stat --format "%U" ./$i)"
+        if [ "${owner}" = "bandit23" ]; then
+            timeout -s 9 60 ./$i
+        fi
+        rm -f ./$i
+    fi
+done
+```
+creo un directorio y script y el script lo paso a foo
+
+```
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ vim a.sh
+
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cat a.sh
+cat /etc/bandit_pass/bandit24 > /tmp/tmp.y8MUAUgn0i/holabebecita
+chmod 444 /tmp/tmp.y8MUAUgn0i/holabebecita
+
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cp a.sh /var/spool/bandit24/foo/a1.sh
+```
+
+
+```
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cat holabebecita
+VAfGXJ1PBSsPSnvsjI8p759leLZ9GGar
+```
+# bandit 24
+Nos conectamos con el puerto 30002
+```
+ nc localhost puerto
+```
+```
+bandit24@bandit:~$ nc localhost 30002
+I am the pincode checker for user bandit25. Please enter the password for user bandit24 and the secret pincode on a single line, separated by a space.
+Timeout. Exiting.
+```
+
+carpeta temporal y creacion de script 
+```
+bandit24@bandit:/tmp/tmp.pJdEj20VVQ$ cat script.sh
+for i in {0..9999}
+do
+        echo "VAfGXJ1PBSsPSnvsjI8p759leLZ9GGar ${i}"
+done
+```
+
+enviamos los echos al puerto 30002
+
+```
+bandit24@bandit:/tmp/tmp.pJdEj20VVQ$ ./script.sh | nc localhost 30002
+```
+y luego de un tiempo 
+
+```
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Wrong! Please enter the correct pincode. Try again.
+Correct!
+The password of user bandit25 is p7TaowMYrmu23Ol8hiZh9UvD0O9hpx8d
+
+Exiting.
+```
+
+# bandit 25
+```
+bandit25@bandit:~$ cat /etc/passwd
+bandit26:x:11026:11026:bandit level 26:/home/bandit26:/usr/bin/showtext
+```
+
+```
+bandit25@bandit:~$ cat /usr/bin/showtext
+#!/bin/sh
+
+export TERM=linux
+
+exec more ~/text.txt
+exit 0
+```
+esto es lo que pasa cuando entras a bandit26 por ssh
+```
+
+  Enjoy your stay!
+
+  _                     _ _ _   ___   __
+ | |                   | (_) | |__ \ / /
+ | |__   __ _ _ __   __| |_| |_   ) / /_
+ | '_ \ / _` | '_ \ / _` | | __| / / '_ \
+ | |_) | (_| | | | | (_| | | |_ / /| (_) |
+ |_.__/ \__,_|_| |_|\__,_|_|\__|____\___/
+Connection to bandit.labs.overthewire.org closed.
+```
+
+por lo tanto text.txt es el arte ascii. Luego, como es more podemos ajustar el tamaño de la ventana y entrar a bandit26 por medio de ssh
+
+```
+bandit25@bandit:~$ ssh bandit26@bandit.labs.overthewire.org -p 2220 -i bandit26.sshkey
+```
+ahora estamos dentro de el programa ``more`` si vemos el manual podemos entrar a vi con ``v``
+Dentro de vi ya podemos reorganizar  el tamaño de la ventana
+
+# Bandit26
+
+Dentro de vi, podemos ejecutar commandos con `:terminal `
+Vemos `:terminal ls` y de salida vemos 
+`bandit27-do  text.txt`
+Vemos Ademas que con `:terminal file bandit27` podemos ver 
+
+```
+bandit27-do: setuid ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, BuildID[sha1]=037b97b430734c79085a8720c90070e346ca378e, for GNU/Linux 3.2.0, not stripped
+```
+
+veamos que hace `bandit27-do`
+
+```
+Run a command as another user.
+  Example: ./bandit27-do id
+```
+Ejecutamos
+`:terminal ./bandit27-do cat /etc/bandit_pass/bandit27  `
+Tenemos
+
+`YnQpBuifNMas1hcUFk70ZmqkhUU2EuaS`
+
+# bandit27
+
+```
+bandit27@bandit:~$ mktemp -d
+/tmp/tmp.eix858EfHM
+```
+
+añadir el puerto 
+```
+bandit27@bandit:/tmp/tmp.eix858EfHM$ git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo
+```
+
+```
+bandit27@bandit:/tmp/tmp.eix858EfHM$ ls
+repo
+bandit27@bandit:/tmp/tmp.eix858EfHM$ cd repo/
+bandit27@bandit:/tmp/tmp.eix858EfHM/repo$ ls
+README
+bandit27@bandit:/tmp/tmp.eix858EfHM/repo$ cat README
+The password to the next level is: AVanL161y9rsbcJIsFHuw35rjaOM19nR
+```
+
+# bandit28
+
+Entramos al repositorio y vemos el README 
+```
+bandit28@bandit:/tmp/tmp.TZysDDRxWs/repo$ cat README.md
+# Bandit Notes
+Some notes for level29 of bandit.
+
+## credentials
+
+- username: bandit29
+- password: xxxxxxxxxx
+```
+vemos los commits
+```
+bandit28@bandit:/tmp/tmp.TZysDDRxWs/repo$ git log
+commit 14f754b3ba6531a2b89df6ccae6446e8969a41f3 (HEAD -> master, origin/master, origin/HEAD)
+Author: Morla Porla <morla@overthewire.org>
+Date:   Thu Oct 5 06:19:41 2023 +0000
+
+    fix info leak
+
+commit f08b9cc63fa1a4602fb065257633c2dae6e5651b
+Author: Morla Porla <morla@overthewire.org>
+Date:   Thu Oct 5 06:19:41 2023 +0000
+
+    add missing data
+
+commit a645bcc508c63f081234911d2f631f87cf469258
+Author: Ben Dover <noone@overthewire.org>
+Date:   Thu Oct 5 06:19:41 2023 +0000
+
+    initial commit of README.md
+```
+hacemos chekout al add missing data
+
+```
+bandit28@bandit:/tmp/tmp.TZysDDRxWs/repo$ git checkout f08b9cc63fa1a4602fb065257633c2dae6e5651b
+Note: switching to 'f08b9cc63fa1a4602fb065257633c2dae6e5651b'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at f08b9cc add missing data
+```
+
+Vemos el README
+
+```
+bandit28@bandit:/tmp/tmp.TZysDDRxWs/repo$ ls
+README.md
+bandit28@bandit:/tmp/tmp.TZysDDRxWs/repo$ cat README.md
+# Bandit Notes
+Some notes for level29 of bandit.
+
+## credentials
+
+- username: bandit29
+- password: tQKvmcwNYcFS6vmPHIUSI3ShmsrQZK8S
+```
+
+# bandit29
+entramos al repositorio y vemos el readme
+
+```
+cat README.md
+# Bandit Notes
+Some notes for bandit30 of bandit.
+
+## credentials
+
+- username: bandit30
+- password: <no passwords in production!>
+```
+
+vemos que no estan en produccion por lo tanto deben destar en otra rama
+
+```
+bandit29@bandit:/tmp/tmp.iUVr8rmYHO/repo$ git checkout
+dev                  master               origin/HEAD          origin/sploits-dev
+HEAD                 origin/dev           origin/master        sploits-dev
+```
+
+hacemos checkout y vemos 
+```
+bandit29@bandit:/tmp/tmp.iUVr8rmYHO/repo$ git checkout dev
+Branch 'dev' set up to track remote branch 'dev' from 'origin'.
+Switched to a new branch 'dev'
+bandit29@bandit:/tmp/tmp.iUVr8rmYHO/repo$ cat README.md
+# Bandit Notes
+Some notes for bandit30 of bandit.
+
+## credentials
+
+- username: bandit30
+- password: xbhV3HpNGlTIdnjUrdAlPzc2L6y9EOnS
+
+```
+# bandit 30
+al clonar el repositorio podemos ver que 
+
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git log
+commit d39631d73f786269b895ae9a7b14760cbf40a99f (HEAD -> master, origin/master, origin/HEAD)
+Author: Ben Dover <noone@overthewire.org>
+Date:   Thu Oct 5 06:19:45 2023 +0000
+
+    initial commit of README.md
+    
+```
+Ademas vemos con el autocompletado que existe una rama llamada secret, entramos a esa rama 
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+HEAD            master          origin/HEAD     origin/master   secret
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+* master
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch secret
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git branch
+* master
+  secret
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git checkout secret
+warning: refname 'secret' is ambiguous.
+Switched to branch 'secret'
+```
+con git log vemos que no cambia nada con la rama master
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git log
+commit d39631d73f786269b895ae9a7b14760cbf40a99f (HEAD -> secret, origin/master, origin/HEAD, master)
+Author: Ben Dover <noone@overthewire.org>
+Date:   Thu Oct 5 06:19:45 2023 +0000
+
+    initial commit of README.md
+```
+Vemos los tags para ver si encontramos algo
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git tag
+secret
+```
+leemos el tag con git show
+```
+bandit30@bandit:/tmp/tmp.G6nZtBcNFO/repo$ git show secret
+warning: refname 'secret' is ambiguous.
+OoffzGDlzhAlerFJ2cAiz1D41JW1Mhmt
+```
+bingo 
+
+# bandit 31
+
+Vemos el readme
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ cat README.md
+This time your task is to push a file to the remote repository.
+
+Details:
+    File name: key.txt
+    Content: 'May I come in?'
+    Branch: master
+```
+
+creamos el archivo
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ echo 'May I come in?' > key.txt
+```
+
+y intentamos hacer push, hacemos `add` al archivo
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git add key.txt
+The following paths are ignored by one of your .gitignore files:
+key.txt
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"
+```
+vemos que el .gitignore esta haciendo que git ignore todos los .txt, por nuestra conveniencia lo quitamos
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ cat .gitignore
+*.txt
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ rm .gitignore
+```
+
+creamos el commit
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git commit -m "push file"
+[master 7b36e39] push file
+ 1 file changed, 1 insertion(+)
+ create mode 100644 key.txt
+```
+hacemos push
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git push
+The authenticity of host '[localhost]:2220 ([127.0.0.1]:2220)' can't be established.
+ED25519 key fingerprint is SHA256:C2ihUBV7ihnV1wUXRb4RrEcLfXC5CXlhmAAM/urerLY.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Could not create directory '/home/bandit31/.ssh' (Permission denied).
+Failed to add the host to the list of known hosts (/home/bandit31/.ssh/known_hosts).
+                         _                     _ _ _
+                        | |__   __ _ _ __   __| (_) |_
+                        | '_ \ / _` | '_ \ / _` | | __|
+                        | |_) | (_| | | | | (_| | | |_
+                        |_.__/ \__,_|_| |_|\__,_|_|\__|
+
+
+                      This is an OverTheWire game server.
+            More information on http://www.overthewire.org/wargames
+
+bandit31-git@localhost's password:
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 322 bytes | 322.00 KiB/s, done.
+Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+remote: ### Attempting to validate files... ####
+remote:
+remote: .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.
+remote:
+remote: Well done! Here is the password for the next level:
+remote: rmCBvG56y58BXzv98yZGdO7ATVL5dW8y
+remote:
+remote: .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.
+remote:
+```
+
+Tenemos la contraseña del nivel 32
+
+# bandit 32
+
+al ingresar vemos que es otra shell 
+```
+>> ls
+sh: 1: LS: Permission denied
+```
+Al parecer toda entrada la pone en mayusculas.
+
+salimos y en bandit 32 vemos cual es
+```
+bandit32:x:11032:11032:bandit level 32:/home/bandit32:/home/bandit32/uppershell
+```
+Entramos otra vez a bandit 32 y usamos `$0` para lanzar una instancia del bash
+```
+>> $0
+$
+```
+luego vemos la contraseña de bandit 33
+```console
+$ cat /etc/bandit_pass/bandit33
+odHo63fHiFqcWWJG9rLiLDtPm45KzUKy
+```
+
+end

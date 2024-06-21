@@ -1,0 +1,84 @@
+---
+title: 'Bandit 20 Writeup'
+date: '2023-10-10'
+lastmod: '2023-10-10'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 20 is a challenge involving tmux, netcat (nc), and the concept of setuid programs in Unix-like OS"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2, active: true},
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+To understand the steps and theory behind the given scenario, we'll cover a few key concepts: tmux, netcat (nc), and the concept of setuid programs in Unix-like operating systems.
+
+## tmux:
+   - `tmux` is a terminal multiplexer. It allows you to create, access, and control multiple terminals (or "windows") from a single screen. 
+   - It is useful for running multiple terminal sessions from a single interface and can help manage multiple processes more efficiently.
+
+## Netcat (nc):
+   - `netcat` is a versatile networking tool often referred to as the "Swiss Army knife" for TCP/IP.
+   - It can create both TCP and UDP connections to transfer data, scan ports, and act as a simple server (listening mode) or client.
+   - In listening mode (`-l`), it waits for incoming connections on a specified port.
+
+## setuid Programs:
+   - The `setuid` (Set User ID) bit is a Unix access rights flag that allows users to run an executable with the permissions of the executable's owner.
+   - It is often used for executables that require higher privileges than those of the user running them, such as root privileges.
+
+# bandit 20
+## Task 
+There is a setuid binary in the homedirectory that does the following: it makes a connection to localhost on the port you specify as a commandline argument. It then reads a line of text from the connection and compares it to the password in the previous level (bandit20). If the password is correct, it will transmit the password for the next level (bandit21).
+
+## Solution
+
+I use tmux to open 2 terminals
+
+I make a connection to communicate with the other
+```
+bandit20@bandit:~$ nc -l 6666
+```
+I run setuid on the other console
+```
+bandit20@bandit:~$ ./suconnect 6666
+```
+
+In the netcat console I send the current password and I see that the setuid commands:
+```
+Read: VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+Password matches, sending next password
+```
+then on port 6666 I receive the message
+```
+NvEJF7oVjkddltPSrdKEFOllh9V1IBcq
+```

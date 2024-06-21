@@ -1,0 +1,92 @@
+---
+title: 'Bandit 32 Writeup'
+date: '2023-10-22'
+lastmod: '2023-10-22'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 32 is a challenge involving git"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 },
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2,active: true },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# bandit 32
+## Task 
+After all this git stuff, it’s time for another escape. Good luck!
+
+## Solution
+Certainly! Here's a more detailed description of the steps and commands used to navigate and solve the problem:
+
+1. **Initial Shell Exploration**:
+   Upon entering the shell, you encounter restricted permissions when trying to list files (`ls` command):
+
+   ```
+   >> ls
+   sh: 1: LS: Permission denied
+   ```
+
+   It appears that all input is being converted to uppercase, which restricts your ability to execute certain commands normally.
+
+2. **Exiting and Reviewing User Information**:
+   You decide to exit back to the previous level (bandit 32) to gather more information about the user:
+
+   ```
+   bandit32:x:11032:11032:bandit level 32:/home/bandit32:/home/bandit32/uppershell
+   ```
+
+   From this output, you learn that the home directory for bandit 32 is `/home/bandit32` and there's a directory named `/home/bandit32/uppershell`.
+
+3. **Re-entering the Shell and Changing to Bash**:
+   You return to bandit 32 and attempt to spawn a bash shell using the `$0` command, which starts a new instance of the current shell with bash:
+
+   ```
+   >> $0
+   $
+   ```
+
+   Now you're in a new bash shell (`$` prompt).
+
+4. **Finding the Password for Bandit 33**:
+   In this new bash shell, you navigate to the directory containing the password file for bandit 33 (`/etc/bandit_pass/bandit33`) and use `cat` to read its contents:
+
+   ```
+   $ cat /etc/bandit_pass/bandit33
+   odHo63fHiFqcWWJG9rLiLDtPm45KzUKy
+   ```
+
+   Here, you find the password for bandit 33: `odHo63fHiFqcWWJG9rLiLDtPm45KzUKy`.
+
+5. **Conclusion**:
+   With the password obtained, you can now proceed to log in as bandit 33 (`ssh bandit33@hostname`) using the password `odHo63fHiFqcWWJG9rLiLDtPm45KzUKy`.
+
+This detailed explanation walks through the steps of accessing and navigating within the restricted shell environment, leveraging `$0` to switch to a more functional bash shell, and finally retrieving the password needed to progress to the next level.

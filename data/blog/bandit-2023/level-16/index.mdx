@@ -1,0 +1,189 @@
+---
+title: 'Bandit 16 Writeup'
+date: '2023-10-06'
+lastmod: '2023-10-06'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 16 is a challenge involving port scanning, service probing, and secure communication."
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2,},
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2,active: true},
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2 },
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Theory and concepts to consider
+Here’s a breakdown of the key concepts and commands used:
+#### Port Scanning with Nmap
+**Nmap (Network Mapper):**
+Nmap is a powerful open-source network scanning tool used to discover hosts and services on a computer network. It is commonly used for:
+- **Port Scanning:** Identifying which ports are open on a target host.
+- **Service Probing:** Determining what services (and their versions) are running on those open ports.
+
+**Key Nmap Options Used:**
+- `-p`: Specifies the port range to scan.
+  ```sh
+  nmap localhost -p 31000-32000
+  ```
+  This command scans ports 31000 to 32000 on the localhost.
+
+- `-sV`: Probes open ports to determine service/version information.
+  ```sh
+  nmap localhost -p 31000-32000 -sV
+  ```
+  This command performs a version scan to identify services running on open ports within the specified range.
+
+- `-T<0-5>`: Sets the timing template, where a higher number is faster but more detectable.
+  ```sh
+  nmap -T4 localhost -p 31000-32000
+  ```
+
+#### Secure Communication with OpenSSL
+
+**OpenSSL:**
+OpenSSL is a robust toolkit for the Secure Sockets Layer (SSL) and Transport Layer Security (TLS) protocols. It provides a command-line tool for various cryptographic operations.
+
+**Using OpenSSL to Connect to an SSL Service:**
+To connect to an SSL service running on a specific port, use the `s_client` command:
+
+# lvl 16 
+## task
+The credentials for the next level can be retrieved by submitting the password of the current level to a port on localhost in the range 31000 to 32000. First find out which of these ports have a server listening on them. Then find out which of those speak SSL and which don’t. There is only 1 server that will give the next credentials, the others will simply send back to you whatever you send to it.
+## Solution
+entry to bandit 16
+#Port scanner on Wikipedia
+nmap port scanning
+```
+-p port ranges
+```
+
+
+```
+nmap localhost -p 31000-32000
+Starting Nmap 7.80 (https://nmap.org) at 2024-06-02 11:53 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00010s latency).
+Not shown: 996 closed ports
+PORT STATE SERVICE
+31046/tcp open unknown
+31518/tcp open unknown
+31691/tcp open unknown
+31790/tcp open unknown
+31960/tcp open unknown
+```
+```
+-sV: Probe open ports to determine service/version info
+```
+
+```
+nmap localhost -p 31000-32000 -sV
+Starting Nmap 7.80 (https://nmap.org) at 2024-06-02 11:55 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00010s latency).
+Not shown: 996 closed ports
+PORT STATE SERVICE VERSION
+31046/tcp open echo
+31518/tcp open ssl/echo
+31691/tcp open echo
+31790/tcp open ssl/unknown
+31960/tcp open echo
+```
+```
+-T<0-5>: Set timing template (higher is faster)
+```
+we enter at 31790
+```
+bandit16@bandit:~$ openssl s_client -connect localhost -port 31790
+```
+and enter the password
+```
+---
+read R BLOCK
+JQttfApK4SeyHwDlI9SXGR50qclOAil1
+Correct!
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAvmOkuifmMg6HL2YPIOjon6iWfbp7c3jx34YkYWqUH57SUdyJ
+imZzeyGC0gtZPGujUSxiJSWI/oTqexh+cAMTSMlOJf7+BrJObArnxd9Y7YT2bRPQ
+Ja6Lzb558YW3FZl87ORiO+rW4LCDCNd2lUvLE/GL2GWyuKN0K5iCd5TbtJzEkQTu
+DSt2mcNn4rhAL+JFr56o4T6z8WWAW18BR6yGrMq7Q/kALHYW3OekePQAzL0VUYbW
+JGTi65CxbCnzc/w4+mqQyvmzpWtMAzJTzAzQxNbkR2MBGySxDLrjg0LWN6sK7wNX
+x0YVztz/zbIkPjfkU1jHS+9EbVNj+D1XFOJuaQIDAQABAoIBABagpxpM1aoLWfvD
+KHcj10nqcoBc4oE11aFYQwik7xfW+24pRNuDE6SFthOar69jp5RlLwD1NhPx3iBl
+J9nOM8OJ0VToum43UOS8YxF8WwhXriYGnc1sskbwpXOUDc9uX4+UESzH22P29ovd
+d8WErY0gPxun8pbJLmxkAtWNhpMvfe0050vk9TL5wqbu9AlbssgTcCXkMQnPw9nC
+YNN6DDP2lbcBrvgT9YCNL6C+ZKufD52yOQ9qOkwFTEQpjtF4uNtJom+asvlpmS8A
+vLY9r60wYSvmZhNqBUrj7lyCtXMIu1kkd4w7F77k+DjHoAXyxcUp1DGL51sOmama
++TOWWgECgYEA8JtPxP0GRJ+IQkX262jM3dEIkza8ky5moIwUqYdsx0NxHgRRhORT
+8c8hAuRBb2G82so8vUHk/fur85OEfc9TncnCY2crpoqsghifKLxrLgtT+qDpfZnx
+SatLdt8GfQ85yA7hnWWJ2MxF3NaeSDm75Lsm+tBbAiyc9P2jGRNtMSkCgYEAypHd
+HCctNi/FwjulhttFx/rHYKhLidZDFYeiE/v45bN4yFm8x7R/b0iE7KaszX+Exdvt
+SghaTdcG0Knyw1bpJVyusavPzpaJMjdJ6tcFhVAbAjm7enCIvGCSx+X3l5SiWg0A
+R57hJglezIiVjv3aGwHwvlZvtszK6zV6oXFAu0ECgYAbjo46T4hyP5tJi93V5HDi
+Ttiek7xRVxUl+iU7rWkGAXFpMLFteQEsRr7PJ/lemmEY5eTDAFMLy9FL2m9oQWCg
+R8VdwSk8r9FGLS+9aKcV5PI/WEKlwgXinB3OhYimtiG2Cg5JCqIZFHxD6MjEGOiu
+L8ktHMPvodBwNsSBULpG0QKBgBAplTfC1HOnWiMGOU3KPwYWt0O6CdTkmJOmL8Ni
+blh9elyZ9FsGxsgtRBXRsqXuz7wtsQAgLHxbdLq/ZJQ7YfzOKU4ZxEnabvXnvWkU
+YODjHdSOoKvDQNWu6ucyLRAWFuISeXw9a/9p7ftpxm0TSgyvmfLF2MIAEwyzRqaM
+77pBAoGAMmjmIJdjp+Ez8duyn3ieo36yrttF5NSsJLAbxFpdlc1gvtGCWW+9Cq0b
+dxviW8+TFVEBl1O4f7HVm6EpTscdDxU+bCXWkfjuRb7Dy9GOtt9JPsX8MBTakzh3
+vBgsyi/sN3RqRBcGU40fOoZyfAMT8s1m/uYv52O6IgeuZ/ujbjY=
+-----END RSA PRIVATE KEY-----
+```
+
+After running the Nmap commands, the output shows which ports are open and what services are running on those ports. 
+Here, port 31790 is open and running an SSL-encrypted service.
+
+Then, We create directories to store the private key
+
+```
+bandit16@bandit:~$ mktemp -d
+/tmp/tmp.S7PnvbwU5u
+```
+We enter the directory and save the private key in a file.
+
+We know that the key in a file has to have very strict permissions, we change the permissions to 400
+```
+bandit16@bandit:/tmp/tmp.S7PnvbwU5u$ chmod 400 passwordinini
+
+```
+To ensure the private key file is only accessible by the owner, set strict permissions:
+The `400` permission means the file is readable only by the owner.
+
+
+we enter
+
+```
+bandit16@bandit:/tmp/tmp.S7PnvbwU5u$ ssh bandit17@bandit.labs.overthewire.org -p 2220 -i password
+
+```
+This command logs into the Bandit Level 17 server using the private key for authentication.
+and get the password

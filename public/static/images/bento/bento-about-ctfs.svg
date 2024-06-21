@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <style bx:fonts="JetBrains Mono">@import url(https://fonts.googleapis.com/css2?family=JetBrains+Mono%3Aital%2Cwght%400%2C100..800%3B1%2C100..800&amp;display=swap);</style>
+  </defs>
+  <rect style="stroke: rgb(45, 45, 45); fill: rgb(14, 14, 14);" x="17.756" y="36.528" width="239.917" height="86.888" rx="9" ry="9"/>
+  <rect style="stroke: rgb(45, 45, 45); fill: rgb(14, 14, 14);" x="59.915" y="139.276" width="196.902" height="49.021" rx="9" ry="9"/>
+  <text style="fill: rgb(255, 255, 255); font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 500; white-space: pre;" transform="matrix(0.664965, 0, 0, 0.664965, -3.907413, 20.027157)" x="58.07500076293945" y="64.66400146484375"> </text>
+  <text style="fill: rgb(255, 255, 255); font-family: 'JetBrains Mono'; font-size: 19.7786px; font-weight: 239.25; line-height: 31.6457px; white-space: pre;" transform="matrix(0.505598, 0, 0, 0.505598, -2.191323, 25.335417)"><tspan x="58.075" y="64.664">Welcome to my blog called k012. </tspan><tspan x="58.07500076293945" dy="1em">​</tspan><tspan>This blog is made to write writeups<tspan x="58.07500076293945" dy="1em">​</tspan>of some CTFs </tspan><tspan>and cybersecurity<tspan x="58.07500076293945" dy="1em">​</tspan>machines.I also post some other</tspan><tspan x="58.07500076293945" dy="1em">​</tspan><tspan>topics, such as crypto,tech,<tspan x="58.07500076293945" dy="1em">​</tspan>and other topics.  </tspan></text>
+  <text style="white-space: pre; fill: rgb(51, 51, 51); font-family: Arial, sans-serif; font-size: 28px;" x="84.638" y="193.243"> </text>
+  <text style="fill: rgb(255, 255, 255); font-family: 'JetBrains Mono'; font-size: 19.7786px; font-weight: 209.5; line-height: 31.6457px; white-space: pre;" transform="matrix(0.505598, 0, 0, 0.505598, 47.326271, 123.319992)"><tspan x="58.075" y="64.664">This project replaces k011,<tspan x="58.07500076293945" dy="1em">​</tspan>my previous </tspan><tspan>blog dedicated<tspan x="58.07500076293945" dy="1em">​</tspan>to cryptography and so on. </tspan></text>
+  <rect style="stroke: rgb(45, 45, 45); fill: rgb(14, 14, 14);" x="18.716" y="202.168" width="240.875" height="39.983" rx="9" ry="9"/>
+  <text style="fill: rgb(255, 255, 255); font-family: 'JetBrains Mono'; font-size: 19.7786px; font-weight: 197.75; line-height: 31.6457px; white-space: pre;" transform="matrix(0.505598, 0, 0, 0.505598, -1.648502, 187.507584)"><tspan x="58.075" y="64.664">I will also post my personal projects<tspan x="58.07500076293945" dy="1em">​</tspan></tspan> &lt;&lt;)</text>
+</svg>

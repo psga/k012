@@ -1,0 +1,152 @@
+---
+title: 'Bandit 31 Writeup'
+date: '2023-10-21'
+lastmod: '2023-10-21'
+tags: ['CTF', 'OTW']
+summary: "Bandit Level 31 is a challenge involving git"
+thumbnail: '/static/images/bandit-2023/banner.png'
+images: ['/static/images/bandit-2023/banner.png']
+authors: ['psga','maysu']
+layout: PostSimple
+hidden: true
+---
+<div className="tocr not-prose">
+    <TOCInline
+        toc={[
+            { value: 'Bandit', url: '/blog/bandit-2023', depth: 1 },
+            { value: 'Level-14', url: '/blog/bandit-2023/level-14',depth: 2 }, 
+            { value: 'Level-15', url: '/blog/bandit-2023/level-15', depth: 2 },
+            { value: 'Level-16', url: '/blog/bandit-2023/level-16', depth: 2 },
+            { value: 'Level-17', url: '/blog/bandit-2023/level-17', depth: 2 },
+            { value: 'Level-18', url: '/blog/bandit-2023/level-18', depth: 2 },
+            { value: 'Level-19', url: '/blog/bandit-2023/level-19', depth: 2 },
+            { value: 'Level-20', url: '/blog/bandit-2023/level-20', depth: 2 },
+            { value: 'Level-21', url: '/blog/bandit-2023/level-21', depth: 2 },
+            { value: 'Level-22', url: '/blog/bandit-2023/level-22', depth: 2 },
+            { value: 'Level-23', url: '/blog/bandit-2023/level-23', depth: 2 },
+            { value: 'Level-24', url: '/blog/bandit-2023/level-24', depth: 2 },
+            { value: 'Level-25', url: '/blog/bandit-2023/level-25', depth: 2 },
+            { value: 'Level-26', url: '/blog/bandit-2023/level-26', depth: 2 },
+            { value: 'Level-27', url: '/blog/bandit-2023/level-27', depth: 2 },
+            { value: 'Level-28', url: '/blog/bandit-2023/level-28', depth: 2 },
+            { value: 'Level-29', url: '/blog/bandit-2023/level-29', depth: 2 },
+            { value: 'Level-30', url: '/blog/bandit-2023/level-30', depth: 2 },
+            { value: 'Level-31', url: '/blog/bandit-2023/level-31', depth: 2,active: true},
+            { value: 'Level-32', url: '/blog/bandit-2023/level-32', depth: 2 },
+        ]}
+        title="levels"
+        rightAlign
+    />
+</div>
+
+
+# Concepts to consider
+### Git push 
+Sure, git push is a Git command used to push or upload local repository commits to a remote repository. Here's a detailed explanation of what happens when you execute git push
+  
+# bandit 31
+## Task 
+There is a git repository at ssh://bandit29-git@localhost/home/bandit29-git/repo via the port 2220. The password for the user bandit29-git is the same as for the user bandit29.
+
+Clone the repository and find the password for the next level.
+
+## Solution
+We see the readme
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ cat README.md
+This time your task is to push a file to the remote repository.
+
+Details:
+    File name: key.txt
+    Content: 'May I come in?'
+    Branch: master
+```
+
+The task is to push a file named `key.txt` with the content 'May I come in?' to the `master` branch of a remote repository.
+
+we create the file
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ echo 'May I come in?' > key.txt
+```
+
+We create the file `key.txt` with the specified content.
+
+and we try to push, we do `add` to the file
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git add key.txt
+The following paths are ignored by one of your .gitignore files:
+key.txt
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"
+```
+
+We attempt to add the file to the staging area with `git add key.txt`, but Git reports that `key.txt` is being ignored due to a `.gitignore` rule.
+
+we see that .gitignore is causing git to ignore all .txt files, for our convenience we remove it
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ cat .gitignore
+*.txt
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ rm .gitignore
+```
+
+We check the `.gitignore` file and find that it is set to ignore all `.txt` files. To proceed, we remove the `.gitignore` file.
+
+we create the commit
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git commit -m "push file"
+[master 7b36e39] push file
+ 1 file changed, 1 insertion(+)
+ create mode 100644 key.txt
+```
+
+We add the file again, and this time it succeeds. We then commit the changes with the message "push file".
+
+we push
+
+```
+bandit31@bandit:/tmp/tmp.uai5umwxQl/repo$ git push
+The authenticity of host '[localhost]:2220 ([127.0.0.1]:2220)' can't be established.
+ED25519 key fingerprint is SHA256:C2ihUBV7ihnV1wUXRb4RrEcLfXC5CXlhmAAM/urerLY.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Could not create directory '/home/bandit31/.ssh' (Permission denied).
+Failed to add the host to the list of known hosts (/home/bandit31/.ssh/known_hosts).
+                         _                     _ _ _
+                        | |__   __ _ _ __   __| (_) |_
+                        | '_ \ / _` | '_ \ / _` | | __|
+                        | |_) | (_| | | | | (_| | | |_
+                        |_.__/ \__,_|_| |_|\__,_|_|\__|
+
+
+                      This is an OverTheWire game server.
+            More information on http://www.overthewire.org/wargames
+
+bandit31-git@localhost's password:
+Enumerating objects: 4, done.
+Counting objects: 100% (4/4), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 322 bytes | 322.00 KiB/s, done.
+Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+remote: ### Attempting to validate files... ####
+remote:
+remote: .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.
+remote:
+remote: Well done! Here is the password for the next level:
+remote: rmCBvG56y58BXzv98yZGdO7ATVL5dW8y
+remote:
+remote: .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.
+remote:
+```
+
+We attempt to push the commit to the remote repository. Git warns us about the authenticity of the host, and we confirm the connection. Since the `.ssh` directory is not accessible, Git cannot store the host key. Despite this, the push succeeds, and the remote server validates the files. 
+
+We have the password for level 32
+
+The server responds with a message indicating that the task is successfully completed and provides the password for the next level: `rmCBvG56y58BXzv98yZGdO7ATVL5dW8y`.

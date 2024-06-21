@@ -2,14 +2,14 @@
 
 <div align="center">
 
-## enscribe.dev
+## My K012 Project
 
-[![CodeFactor]](https://www.codefactor.io/repository/github/jktrn/enscribe.dev)
-[![Next.js]](https://hexo.io)
+[![CodeFactor]](https://www.codefactor.io/repository/github/psga/k012)
+[![Next.js]](https://nextjs.org/)
 [![License]](LICENSE)
 [![Non-Code License]](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
-[enscribe.dev](https://enscribe.dev) is my personal information-security blog—built with [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), TypeScript, and deployed on [Vercel](https://vercel.com/). Based off the [timlrx/tailwind-nextjs-starter-blog](https://github.com/timlrx/tailwind-nextjs-starter-blog/) blogging template.
+[My K012 Project](https://github.com/psga) is my submission for the K012 project, based on the [enscribe.dev](https://enscribe.dev) repository—a personal information-security blog built with [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), TypeScript, and deployed on [Vercel](https://vercel.com/). It is a fork of the original repository available at [jktrn/enscribe.dev](https://github.com/jktrn/enscribe.dev), leveraging the [timlrx/tailwind-nextjs-starter-blog](https://github.com/timlrx/tailwind-nextjs-starter-blog/) blogging template.
 
 </div>
 
@@ -35,11 +35,11 @@ This is a list of the various technologies used to build this website:
 
 ## Forking and Cloning Notice
 
-Thanks for taking a look at my blog!
+Thanks for checking out my K012 project!
 
-While the licenses provided grant specific legal permissions for the use of my code and content, I'd like to make an ethical request: please refrain from cloning this repository to use the theme or its contents as your own. The theme, design, graphics, and all blog content are personal to my brand. While, of course, you have rights to use them (within the boundaries of the licenses), I would sincerely appreciate it if they remain unique to this site out of respect for the effort and originality put into them.
+While the licenses provided grant specific legal permissions for the use of my code and content, I kindly request that you respect the originality and effort put into this project. This project is based on the [enscribe.dev](https://enscribe.dev) repository, and while you have the right to use it under the licenses provided, please refrain from using the theme or its contents as your own out of respect for its original creator.
 
-I'm thrilled that my work is open-source and hope that it serves as a learning tool, a reference, or a source of inspiration for your projects. **Embracing originality not only fosters personal growth but also nurtures innovation and uniqueness**. I'm always open for chats, discussions, or collaborations. Feel free to reach out if you have any questions about this project, or if you just want to share your thoughts. Cheers!
+I'm excited to share this project as a learning tool and reference. **Embracing originality not only fosters personal growth but also nurtures innovation and uniqueness**. Feel free to reach out if you have any questions or would like to discuss further. Cheers!
 
 ---
 
@@ -51,7 +51,7 @@ For the purposes of this license, "code" refers to the software components, conf
 
 All such code in this repository is licensed under the **Apache License 2.0**:
 
-> [enscribe.dev](https://enscribe.dev) © 2023 by enscribe
+> [My K012 Project](https://github.com/psga) © 2024 by psga
 >
 > Licensed under the Apache License, Version 2.0 (the "License");
 > you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ All such code in this repository is licensed under the **Apache License 2.0**:
 
 Any content not defined above as code, which includes but is not limited to MDX blog posts, SVG graphics, personal assets, other images, written content in any format, and any accompanying documentation, is licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International** (CC BY-NC-ND 4.0) License. This means you can use and share the content, but you must provide appropriate attribution, cannot use it for commercial purposes, and cannot distribute modified versions of it. Further details can be found at [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/).
 
-[CodeFactor]: https://img.shields.io/codefactor/grade/github/jktrn/enscribe.dev?color=2f2a24&logo=codefactor&logoColor=fff&style=for-the-badge
-[Next.js]: https://img.shields.io/github/package-json/dependency-version/jktrn/enscribe.dev/next?color=463f37&logo=next.js&logoColor=fff&style=for-the-badge
-[License]: https://img.shields.io/github/license/jktrn/enscribe.dev?color=5d5449&logo=github&logoColor=fff&style=for-the-badge
+[CodeFactor]: https://img.shields.io/codefactor/grade/github/psga/k012?color=2f2a24&logo=codefactor&logoColor=fff&style=for-the-badge
+[Next.js]: https://img.shields.io/github/package-json/dependency-version/psga/k012/next?color=463f37&logo=next.js&logoColor=fff&style=for-the-badge
+[License]: https://img.shields.io/github/license/psga/k012?color=5d5449&logo=github&logoColor=fff&style=for-the-badge
 [Non-Code License]: https://img.shields.io/badge/non--code%20license-CC%20BY--NC--ND%204.0-756a5b?style=for-the-badge&logo=creativecommons&logoColor=fff

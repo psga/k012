@@ -295,7 +295,7 @@ const BentoBox = ({ posts }) => {
             </div>
             <div
                 key="contributions"
-                className="group flex items-center justify-center"
+                className="group flex items-center justify-center "
                 onMouseEnter={() => setIntroSilhouette(true)}
                 onMouseLeave={() => setIntroSilhouette(false)}
             >
@@ -304,7 +304,7 @@ const BentoBox = ({ posts }) => {
                     silhouetteAlt="Bento GitHub Contributions Silhouette"
                     mainSrc="/static/images/bento/bento-contributions.svg"
                     mainAlt="Bento GitHub Contributions"
-                    className="rounded-3xl object-cover z-[2] flex items-center justify-center p-4"
+                    className="rounded-3xl object-cover z-[2] flex items-center justify-center p-4 hidden lg:block"
                 >
                     <GithubCalendar
                         username="psga"

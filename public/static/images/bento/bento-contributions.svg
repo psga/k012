@@ -1,13 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg width="576" height="280" viewBox="0 0 576 280" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
-  <defs>
-    <style bx:fonts="JetBrains Mono">@import url(https://fonts.googleapis.com/css2?family=JetBrains+Mono%3Aital%2Cwght%400%2C100..800%3B1%2C100..800&amp;display=swap);</style>
-  </defs>
-  <mask id="mask0_8_96" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="576" height="280">
-    <rect width="576" height="280" fill="#0F0F0F"/>
-  </mask>
-  <g mask="url(#mask0_8_96)">
-    <path d="M 13 192.747 L 53.363 192.747 L 56.199 192.792 C 59.582 192.679 56.324 192.986 56.652 192.78 L 60.311 192.747 L 88 192.747 C 90.482 192.747 92.5 194.745 92.5 197.218 L 92.5 223.029 C 92.5 225.502 90.482 227.5 88 227.5 L 13 227.5 C 10.518 227.5 8.5 225.502 8.5 223.029 L 8.5 197.218 C 8.5 194.745 10.518 192.747 13 192.747 Z" fill="#101010" stroke="#272727"/>
-  </g>
-  <text style="fill: rgb(255, 255, 255); font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 500; white-space: pre;" transform="matrix(0.603094, 0, 0, 0.603094, -15.938414, 169.832382)" y="64.66400146484375" x="58.07500076293945">My Github<tspan x="58.07500076293945" dy="1em">​</tspan>graph!<tspan x="58.07500076293945" dy="1em">​</tspan></text>
+<svg width="576" height="280" viewBox="0 0 576 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs/>
 </svg>

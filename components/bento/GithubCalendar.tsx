@@ -71,7 +71,6 @@ const GithubCalendar: FunctionComponent<Props> = ({ username, ...props }) => {
                 dark: ['#1A1A1A', '#b30000'],
             }}
             {...props}
-            maxLevel={4}
         />
     )
 }
